@@ -2,17 +2,13 @@ package io.github.prototypez.appjoint;
 
 import com.google.auto.service.AutoService;
 
-import com.github.mzule.activityrouter.annotation.Module;
-import com.github.mzule.activityrouter.annotation.Modules;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +25,9 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
+import ect888.com.appjoint_core.ModuleSpec;
+import ect888.com.appjoint_core.ModulesSpec;
+
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class AppJointProcessor extends AbstractProcessor {
@@ -44,8 +43,8 @@ public class AppJointProcessor extends AbstractProcessor {
     public Set<String> getSupportedAnnotationTypes() {
         return new HashSet<>(
                 Arrays.asList(
-                        Module.class.getCanonicalName(),
-                        Modules.class.getCanonicalName()
+                        ModuleSpec.class.getCanonicalName(),
+                        ModulesSpec.class.getCanonicalName()
                 )
         );
     }
@@ -54,10 +53,10 @@ public class AppJointProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
 
         Set<? extends Element> moduleInterfaces = roundEnvironment
-                .getElementsAnnotatedWith(Module.class);
+                .getElementsAnnotatedWith(ModuleSpec.class);
 
         Set<? extends Element> modulesInterfaces = roundEnvironment
-                .getElementsAnnotatedWith(Modules.class);
+                .getElementsAnnotatedWith(ModulesSpec.class);
 
         if (moduleInterfaces != null) {
             for (Element element : moduleInterfaces) {
@@ -65,7 +64,7 @@ public class AppJointProcessor extends AbstractProcessor {
                     String className = element.getSimpleName().toString();
                     String packageName = ((PackageElement) element.getEnclosingElement()).getQualifiedName()
                             .toString();
-                    Module module = element.getAnnotation(Module.class);
+                    ModuleSpec module = element.getAnnotation(ModuleSpec.class);
                     createModuleAppInfoClass(module.value(), ClassName.get(packageName, className));
                 }
             }
@@ -75,10 +74,10 @@ public class AppJointProcessor extends AbstractProcessor {
         if (modulesInterfaces != null) {
             for (Element element : modulesInterfaces) {
                 if (element.getKind() == ElementKind.CLASS) {
-                    String className = element.getSimpleName().toString();
-                    String packageName = ((PackageElement) element.getEnclosingElement()).getQualifiedName()
-                            .toString();
-                    Modules modules = element.getAnnotation(Modules.class);
+//                    String className = element.getSimpleName().toString();
+//                    String packageName = ((PackageElement) element.getEnclosingElement()).getQualifiedName()
+//                            .toString();
+                    ModulesSpec modules = element.getAnnotation(ModulesSpec.class);
                     String[] moduleNames = modules.value();
                     createAppJointClass(moduleNames);
                 }
