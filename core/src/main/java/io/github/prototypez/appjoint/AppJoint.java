@@ -63,15 +63,15 @@ public class AppJoint {
     private void initCallbackMethods(Application delegateApp, Application targetApp) {
 
         try {
-            Field mActivityLifecycleCallbacksField = Application.class.getField("mActivityLifecycleCallbacks");
+            Field mActivityLifecycleCallbacksField = Application.class.getDeclaredField("mActivityLifecycleCallbacks");
             mActivityLifecycleCallbacksField.setAccessible(true);
             mActivityLifecycleCallbacksField.set(targetApp, mActivityLifecycleCallbacksField.get(delegateApp));
 
-            Field mComponentCallbacksField = Application.class.getField("mComponentCallbacks");
+            Field mComponentCallbacksField = Application.class.getDeclaredField("mComponentCallbacks");
             mComponentCallbacksField.setAccessible(true);
             mComponentCallbacksField.set(targetApp, mComponentCallbacksField.get(delegateApp));
 
-            Field mAssistCallbacksField = Application.class.getField("mAssistCallbacks");
+            Field mAssistCallbacksField = Application.class.getDeclaredField("mAssistCallbacks");
             mAssistCallbacksField.setAccessible(true);
             mAssistCallbacksField.set(targetApp, mAssistCallbacksField.get(delegateApp));
 
