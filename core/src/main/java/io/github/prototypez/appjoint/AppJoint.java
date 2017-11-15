@@ -1,4 +1,4 @@
-package ect888.com.core;
+package io.github.prototypez.appjoint;
 
 import android.app.Application;
 import android.content.Context;
