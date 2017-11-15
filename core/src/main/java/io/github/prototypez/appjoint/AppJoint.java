@@ -2,6 +2,7 @@ package io.github.prototypez.appjoint;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.res.Configuration;
 
 import java.lang.reflect.Field;
@@ -40,11 +41,9 @@ public class AppJoint {
         for (Application app : moduleApplications) {
             try {
                 // invoke each application's attachBaseContext
-                Method attachBaseContext = Application.class.getMethod("attachBaseContext", Context.class);
+                Method attachBaseContext = ContextWrapper.class.getDeclaredMethod("attachBaseContext", Context.class);
                 attachBaseContext.setAccessible(true);
                 attachBaseContext.invoke(app, context);
-
-
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();
             } catch (IllegalAccessException e) {
