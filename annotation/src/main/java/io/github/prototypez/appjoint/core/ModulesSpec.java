@@ -1,4 +1,4 @@
-package ect888.com.appjoint_core;
+package io.github.prototypez.appjoint.core;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

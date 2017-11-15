@@ -1,1 +1,1 @@
-include ':processor', ':core'
+include ':processor', ':annotation', ':core'

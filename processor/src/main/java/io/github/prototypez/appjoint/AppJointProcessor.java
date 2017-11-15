@@ -25,8 +25,8 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
-import ect888.com.appjoint_core.ModuleSpec;
-import ect888.com.appjoint_core.ModulesSpec;
+import io.github.prototypez.appjoint.core.ModuleSpec;
+import io.github.prototypez.appjoint.core.ModulesSpec;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
@@ -128,7 +128,7 @@ public class AppJointProcessor extends AbstractProcessor {
         CodeBlock.Builder codeBlock = CodeBlock.builder();
         codeBlock.add("$T.asList(\n", Arrays.class);
         for (int i = 0; moduleNames != null && i < moduleNames.length; i++) {
-            codeBlock.add("  new $T()", ClassName.get(JOINT_CLASS_PACKAGE, JOINT_CLASS_SIMPLE_NAME + "_" + moduleNames[i]));
+            codeBlock.add("  $T.INSTANCE", ClassName.get(JOINT_CLASS_PACKAGE, JOINT_CLASS_SIMPLE_NAME + "_" + moduleNames[i]));
             if (i == moduleNames.length - 1) {
                 codeBlock.add("\n");
             } else {
