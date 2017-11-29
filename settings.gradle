@@ -1,1 +1,1 @@
-include ':processor', ':annotation', ':core'
+include ':processor', ':annotation', ':core', ':router', ':monkey', ':tiger', ':app'

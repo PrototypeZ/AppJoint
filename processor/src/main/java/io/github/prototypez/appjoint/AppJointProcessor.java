@@ -10,8 +10,10 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -24,9 +26,11 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 import io.github.prototypez.appjoint.core.ModuleSpec;
 import io.github.prototypez.appjoint.core.ModulesSpec;
+import io.github.prototypez.appjoint.core.RouterProvider;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
@@ -35,6 +39,7 @@ public class AppJointProcessor extends AbstractProcessor {
     private static final String JOINT_CLASS_PACKAGE = "io.github.prototypez.appjoint";
 
     private static final String JOINT_CLASS_SIMPLE_NAME = "AppJointResult";
+    private static final String ROUTER_JOINT_CLASS_SIMPLE_NAME = "RouterJointResult";
 
     private ClassName contextClass = ClassName.get("android.content", "Context");
     private ClassName applicationClass = ClassName.get("android.app", "Application");
@@ -44,7 +49,8 @@ public class AppJointProcessor extends AbstractProcessor {
         return new HashSet<>(
                 Arrays.asList(
                         ModuleSpec.class.getCanonicalName(),
-                        ModulesSpec.class.getCanonicalName()
+                        ModulesSpec.class.getCanonicalName(),
+                        RouterProvider.class.getCanonicalName()
                 )
         );
     }
@@ -52,11 +58,16 @@ public class AppJointProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
 
+        String moduleName = processModuleSpec(set, roundEnvironment);
+        processRouterProvider(set, roundEnvironment, moduleName);
+        processModulesSpec(set, roundEnvironment);
+
+        return false;
+    }
+
+    private String processModuleSpec(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         Set<? extends Element> moduleInterfaces = roundEnvironment
                 .getElementsAnnotatedWith(ModuleSpec.class);
-
-        Set<? extends Element> modulesInterfaces = roundEnvironment
-                .getElementsAnnotatedWith(ModulesSpec.class);
 
         if (moduleInterfaces != null) {
             for (Element element : moduleInterfaces) {
@@ -66,26 +77,90 @@ public class AppJointProcessor extends AbstractProcessor {
                             .toString();
                     ModuleSpec module = element.getAnnotation(ModuleSpec.class);
                     createModuleAppInfoClass(module.value(), ClassName.get(packageName, className));
+                    return module.value();
                 }
             }
         }
 
+        return "";
+    }
+
+    private void processModulesSpec(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
+        Set<? extends Element> modulesInterfaces = roundEnvironment
+                .getElementsAnnotatedWith(ModulesSpec.class);
 
         if (modulesInterfaces != null) {
             for (Element element : modulesInterfaces) {
                 if (element.getKind() == ElementKind.CLASS) {
-//                    String className = element.getSimpleName().toString();
-//                    String packageName = ((PackageElement) element.getEnclosingElement()).getQualifiedName()
-//                            .toString();
                     ModulesSpec modules = element.getAnnotation(ModulesSpec.class);
                     String[] moduleNames = modules.value();
                     createAppJointClass(moduleNames);
                 }
             }
         }
-
-        return false;
     }
+
+    private void processRouterProvider(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment, String moduleName) {
+
+        if (moduleName.equals("")) return;
+
+        Set<? extends Element> routerProviderInterfaces = roundEnvironment
+                .getElementsAnnotatedWith(RouterProvider.class);
+
+        Map<TypeMirror, ClassName> routerImplementMap = new HashMap<>();
+
+        if (routerProviderInterfaces != null) {
+            for (Element element : routerProviderInterfaces) {
+                if (element.getKind() == ElementKind.CLASS) {
+                    String className = element.getSimpleName().toString();
+                    String packageName = ((PackageElement) element.getEnclosingElement()).getQualifiedName()
+                            .toString();
+                    RouterProvider module = element.getAnnotation(RouterProvider.class);
+                    ClassName annotatedClass = ClassName.get(packageName, className);
+                    List<? extends TypeMirror> interfaces = ((TypeElement)element).getInterfaces();
+                    interfaces.forEach(o -> routerImplementMap.put(o, annotatedClass));
+//                    createModuleAppInfoClass(module.value(), ClassName.get(packageName, className));
+                }
+            }
+
+
+            TypeSpec.Builder jointClass = TypeSpec.classBuilder(
+                    ClassName.get(JOINT_CLASS_PACKAGE, ROUTER_JOINT_CLASS_SIMPLE_NAME + "_" + moduleName)
+            )
+                    .addModifiers(Modifier.PUBLIC);
+
+            // Field moduleApplication
+            CodeBlock.Builder codeBlock = CodeBlock.builder();
+            codeBlock.add("new $T(){{\n", HashMap.class);
+            for (Map.Entry<TypeMirror, ClassName> entry : routerImplementMap.entrySet()) {
+                codeBlock.add("  put($T.class, $T.class);\n", entry.getKey(), entry.getValue());
+            }
+            codeBlock.add("}}");
+            FieldSpec routerProvidersField = FieldSpec
+                    .builder(Map.class, "ROUTER_PROVIDER_MAP")
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                    .initializer(codeBlock.build())
+                    .build();
+            jointClass.addField(routerProvidersField);
+
+            // Create
+            TypeSpec jointType = jointClass.build();
+            JavaFile javaFile = JavaFile.builder(
+                    JOINT_CLASS_PACKAGE,
+                    jointType
+            )
+                    .build();
+
+            // Finally, write the source to file
+            try {
+                javaFile.writeTo(processingEnv.getFiler());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
 
     private void createModuleAppInfoClass(String moduleName, ClassName appClassName) {
         TypeSpec.Builder jointClass = TypeSpec.classBuilder(
@@ -142,6 +217,21 @@ public class AppJointProcessor extends AbstractProcessor {
                 .initializer(codeBlock.build())
                 .build();
         jointClass.addField(moduleApplicationsField);
+
+        // Field moduleApplication
+        CodeBlock.Builder routerProviderCallback = CodeBlock.builder();
+        routerProviderCallback.add("new $T(){{\n", HashMap.class);
+        for (int i = 0; moduleNames != null && i < moduleNames.length; i++) {
+            routerProviderCallback.add("  putAll($T.ROUTER_PROVIDER_MAP);\n", ClassName.get(JOINT_CLASS_PACKAGE, ROUTER_JOINT_CLASS_SIMPLE_NAME + "_" + moduleNames[i]));
+        }
+        routerProviderCallback.add("}}");
+
+        FieldSpec moduleRoutersField = FieldSpec
+                .builder(Map.class, "ROUTERS_PROVIDER_MAP")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                .initializer(routerProviderCallback.build())
+                .build();
+        jointClass.addField(moduleRoutersField);
 
         // Create
         TypeSpec jointType = jointClass.build();
