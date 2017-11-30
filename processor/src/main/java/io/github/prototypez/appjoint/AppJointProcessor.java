@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Messager;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
@@ -27,6 +29,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
 
 import io.github.prototypez.appjoint.core.ModuleSpec;
 import io.github.prototypez.appjoint.core.ModulesSpec;
@@ -36,6 +39,8 @@ import io.github.prototypez.appjoint.core.RouterProvider;
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class AppJointProcessor extends AbstractProcessor {
 
+    private Messager messager;
+
     private static final String JOINT_CLASS_PACKAGE = "io.github.prototypez.appjoint";
 
     private static final String JOINT_CLASS_SIMPLE_NAME = "AppJointResult";
@@ -43,6 +48,12 @@ public class AppJointProcessor extends AbstractProcessor {
 
     private ClassName contextClass = ClassName.get("android.content", "Context");
     private ClassName applicationClass = ClassName.get("android.app", "Application");
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnv) {
+        super.init(processingEnv);
+        messager = processingEnv.getMessager();
+    }
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
@@ -58,9 +69,18 @@ public class AppJointProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
 
-        String moduleName = processModuleSpec(set, roundEnvironment);
-        processRouterProvider(set, roundEnvironment, moduleName);
-        processModulesSpec(set, roundEnvironment);
+        messager = processingEnv.getMessager();
+
+        try {
+            String moduleName = processModuleSpec(set, roundEnvironment);
+            processRouterProvider(set, roundEnvironment, moduleName);
+            processModulesSpec(set, roundEnvironment);
+        } catch (Throwable throwable) {
+            error(throwable.getMessage());
+            for (StackTraceElement s : throwable.getStackTrace()) {
+                error(s.toString() + "\n");
+            }
+        }
 
         return false;
     }
@@ -247,5 +267,14 @@ public class AppJointProcessor extends AbstractProcessor {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+
+    private void error(String error) {
+        messager.printMessage(Diagnostic.Kind.ERROR, error);
+    }
+
+    private void debug(String msg) {
+        messager.printMessage(Diagnostic.Kind.NOTE, msg);
     }
 }
