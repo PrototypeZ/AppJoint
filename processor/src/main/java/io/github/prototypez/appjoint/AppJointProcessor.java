@@ -49,6 +49,8 @@ public class AppJointProcessor extends AbstractProcessor {
     private ClassName contextClass = ClassName.get("android.content", "Context");
     private ClassName applicationClass = ClassName.get("android.app", "Application");
 
+    private static final String APP_MODULE_NAME = "app";
+
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
@@ -98,6 +100,16 @@ public class AppJointProcessor extends AbstractProcessor {
                     ModuleSpec module = element.getAnnotation(ModuleSpec.class);
                     createModuleAppInfoClass(module.value(), ClassName.get(packageName, className));
                     return module.value();
+                }
+            }
+        }
+
+        Set<? extends Element> modulesInterfaces = roundEnvironment
+                .getElementsAnnotatedWith(ModulesSpec.class);
+        if (modulesInterfaces != null) {
+            for (Element element : modulesInterfaces) {
+                if (element.getKind() == ElementKind.CLASS) {
+                    return APP_MODULE_NAME;
                 }
             }
         }
@@ -241,6 +253,7 @@ public class AppJointProcessor extends AbstractProcessor {
         // Field moduleApplication
         CodeBlock.Builder routerProviderCallback = CodeBlock.builder();
         routerProviderCallback.add("new $T(){{\n", HashMap.class);
+        routerProviderCallback.add("  putAll($T.ROUTER_PROVIDER_MAP);\n", ClassName.get(JOINT_CLASS_PACKAGE, ROUTER_JOINT_CLASS_SIMPLE_NAME + "_" + APP_MODULE_NAME));
         for (int i = 0; moduleNames != null && i < moduleNames.length; i++) {
             routerProviderCallback.add("  putAll($T.ROUTER_PROVIDER_MAP);\n", ClassName.get(JOINT_CLASS_PACKAGE, ROUTER_JOINT_CLASS_SIMPLE_NAME + "_" + moduleNames[i]));
         }

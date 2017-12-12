@@ -4,6 +4,7 @@ import android.app.Application;
 
 import io.github.prototypez.appjoint.AppJoint;
 import io.github.prototypez.appjoint.core.ModuleSpec;
+import io.github.prototypez.router.FuncAppRouter;
 import io.github.prototypez.router.FuncMonkeyRouter;
 import io.github.prototypez.router.FuncMonkeyRouter2;
 
@@ -20,5 +21,6 @@ public class TigerApplication extends Application {
         AppJoint.get().getRouter(FuncMonkeyRouter.class).startMonkeyForResult();
         AppJoint.get().getRouter(FuncMonkeyRouter2.class).startMonkey();
         AppJoint.get().getRouter(FuncMonkeyRouter2.class).startMonkeyForResult();
+        AppJoint.get().getRouter(FuncAppRouter.class).callApp();
     }
 }
