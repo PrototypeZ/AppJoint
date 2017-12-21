@@ -123,16 +123,16 @@ public class AppJoint {
         }
     }
 
-    public synchronized <T> T getRouter(Class<T> routerType) {
+    public static synchronized <T> T getRouter(Class<T> routerType) {
         T requiredRouter = null;
-        if (!routerInstanceMap.containsKey(routerType)) {
+        if (!get().routerInstanceMap.containsKey(routerType)) {
             try {
-                requiredRouter = (T) routersMap.get(routerType).newInstance();
+                requiredRouter = (T) get().routersMap.get(routerType).newInstance();
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
         } else {
-            requiredRouter = (T) routerInstanceMap.get(routerType);
+            requiredRouter = (T) get().routerInstanceMap.get(routerType);
         }
         return requiredRouter;
     }
