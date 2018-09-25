@@ -8,7 +8,7 @@ import io.github.prototypez.appjoint.core.ModulesSpec;
 /**
  * Created by zhounl on 2017/11/28.
  */
-@ModulesSpec({"tiger", "monkey"})
+@ModulesSpec({"module1", "module2"})
 public class App extends Application {
 
     @Override
