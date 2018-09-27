@@ -9,8 +9,6 @@ import io.github.prototypez.router.app.Callback;
 
 public class Module1Activity extends AppCompatActivity {
 
-    AppRouter appRouter = AppJoint.getRouter(AppRouter.class);
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
