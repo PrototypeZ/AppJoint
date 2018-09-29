@@ -1,0 +1,40 @@
+group 'io.github.prototypez'
+version '1.0'
+
+apply plugin: 'groovy'
+apply plugin: 'maven'
+
+buildscript {
+
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+//        classpath 'com.novoda:bintray-release:0.8.1'
+    }
+}
+
+
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+    compile 'com.android.tools.build:gradle-api:3.0.0'
+//    compile 'javassist:javassist:3.12.1.GA'
+    compile 'org.ow2.asm:asm:5.1'
+    compile 'commons-io:commons-io:2.6'
+//    compile 'commons-logging:commons-logging:1.2'
+
+//    compile project(':core')
+//    compile 'io.github.prototypez:save-state-core:0.1'
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.artifactId = 'app-joint'
+            repository(url: uri('../../repo'))
+        }
+    }
+}
