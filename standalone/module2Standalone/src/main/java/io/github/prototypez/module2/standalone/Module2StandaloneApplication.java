@@ -2,7 +2,7 @@ package io.github.prototypez.module2.standalone;
 
 import android.util.Log;
 
-import io.github.prototypez.appjoint.module1.Module2Application;
+import io.github.prototypez.appjoint.module2.Module2Application;
 
 public class Module2StandaloneApplication extends Module2Application {
 

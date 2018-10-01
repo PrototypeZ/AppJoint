@@ -1,4 +1,4 @@
-package io.github.prototypez.appjoint.module1;
+package io.github.prototypez.appjoint.module2;
 
 import android.app.Application;
 import android.util.Log;
