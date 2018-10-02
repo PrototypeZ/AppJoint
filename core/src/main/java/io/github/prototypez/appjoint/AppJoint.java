@@ -4,9 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Configuration;
-import android.support.annotation.Nullable;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -20,30 +18,13 @@ import java.util.Map;
 
 public class AppJoint {
 
-    private List<Application> moduleApplications;
+    private List<Application> moduleApplications = new ArrayList<>();
 
-    private Map<Class, Class> routersMap;
+    private Map<Class, Class> routersMap = new HashMap<>();
 
     private Map<Class, Object> routerInstanceMap = new HashMap<>();
 
-    private AppJoint() {
-
-        moduleApplications = new ArrayList<>();
-
-        try {
-            Class appJointResultClass = Class.forName("io.github.prototypez.appjoint.AppJointResult");
-            Field appField = appJointResultClass.getField("INSTANCES");
-            moduleApplications = (List<Application>) appField.get(appJointResultClass);
-            Field routersField = appJointResultClass.getField("ROUTERS_PROVIDER_MAP");
-            routersMap = (Map<Class, Class>) routersField.get(appJointResultClass);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-    }
+    private AppJoint() { }
 
 
     public void attachBaseContext(Context context) {
@@ -63,39 +44,10 @@ public class AppJoint {
         }
     }
 
-    public void initCallbackMethods(Application delegateApp) {
-        for (Application app : moduleApplications) {
-            initCallbackMethods(delegateApp, app);
-        }
-    }
-
-    private void initCallbackMethods(Application delegateApp, Application targetApp) {
-
-        try {
-            Field mActivityLifecycleCallbacksField = Application.class.getDeclaredField("mActivityLifecycleCallbacks");
-            mActivityLifecycleCallbacksField.setAccessible(true);
-            mActivityLifecycleCallbacksField.set(targetApp, mActivityLifecycleCallbacksField.get(delegateApp));
-
-            Field mComponentCallbacksField = Application.class.getDeclaredField("mComponentCallbacks");
-            mComponentCallbacksField.setAccessible(true);
-            mComponentCallbacksField.set(targetApp, mComponentCallbacksField.get(delegateApp));
-
-            Field mAssistCallbacksField = Application.class.getDeclaredField("mAssistCallbacks");
-            mAssistCallbacksField.setAccessible(true);
-            mAssistCallbacksField.set(targetApp, mAssistCallbacksField.get(delegateApp));
-
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
     public void onCreate() {
         for (Application app : moduleApplications) {
             app.onCreate();
         }
-
     }
 
     public void onConfigurationChanged(Configuration configuration) {
@@ -128,6 +80,7 @@ public class AppJoint {
         if (!get().routerInstanceMap.containsKey(routerType)) {
             try {
                 requiredRouter = (T) get().routersMap.get(routerType).newInstance();
+                get().routerInstanceMap.put(routerType, requiredRouter);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

@@ -1,20 +1,13 @@
 package io.github.prototypez.appjoint.plugin
 
-import com.android.build.api.transform.Format
-import com.android.build.api.transform.QualifiedContent
-import com.android.build.api.transform.Transform
-import com.android.build.api.transform.TransformException
-import com.android.build.api.transform.TransformInvocation
+import com.android.build.api.transform.*
 import com.google.common.collect.Sets
 import groovy.io.FileType
 import io.github.prototypez.appjoint.plugin.util.Compressor
 import io.github.prototypez.appjoint.plugin.util.Decompression
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
-import org.objectweb.asm.AnnotationVisitor
-import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.Opcodes
+import org.objectweb.asm.*
 
 class AppJointTransform extends Transform {
 
@@ -37,6 +30,12 @@ class AppJointTransform extends Transform {
      * The AppJoint class File
      */
     def appJointClassFile
+
+    boolean appJointClassInJar = false
+
+    File appJointJarRepackageFolder
+
+    File appJointJarDest
 
     AppJointTransform(Project project) {
         mProject = project
@@ -104,7 +103,7 @@ class AppJointTransform extends Transform {
 
             // Inside submodules, find class annotated with
             // @ModuleSpec, @ModulesSpec or @RouterProvider
-            possibleModules.each {jarInput ->
+            possibleModules.each { jarInput ->
                 def jarName = jarInput.name
 
                 File unzipDir = new File(
@@ -124,7 +123,7 @@ class AppJointTransform extends Transform {
                 FileUtils.copyDirectory(unzipDir, repackageFolder)
 
                 unzipDir.eachFileRecurse(FileType.FILES) { File it ->
-                    findAnnotatedClasses(it)
+                    findAnnotatedClasses(it, repackageFolder)
                 }
 
                 // re-package the folder to jar
@@ -137,7 +136,7 @@ class AppJointTransform extends Transform {
 
             // Inside local ':core' Module or remote app-joint dependency,
             // find the AppJoint class in jars
-            possibleStubs.each {jarInput ->
+            possibleStubs.each { jarInput ->
                 def jarName = jarInput.name
 
                 File unzipDir = new File(
@@ -160,12 +159,22 @@ class AppJointTransform extends Transform {
                     findAppJointClass(it)
                 }
 
+                if (appJointClassFile != null) {
+                    // find the AppJoint class in jar
+                    appJointClassInJar = true
+                }
+
                 // re-package the folder to jar
                 def dest = transformInvocation.outputProvider.getContentLocation(
                         jarName, jarInput.contentTypes, jarInput.scopes, Format.JAR)
 
-                Compressor zc = new Compressor(dest.getAbsolutePath())
-                zc.compress(repackageFolder.getAbsolutePath())
+                if (appJointClassFile == null) {
+                    Compressor zc = new Compressor(dest.getAbsolutePath())
+                    zc.compress(repackageFolder.getAbsolutePath())
+                } else {
+                    appJointJarDest = dest
+                    appJointJarRepackageFolder = repackageFolder
+                }
             }
 
             // Find annotated classes and AppJoint class in dir
@@ -180,9 +189,10 @@ class AppJointTransform extends Transform {
                         if (it.isDirectory()) {
                             new File(outDir, path).mkdirs()
                         } else {
-                            findAnnotatedClasses(it)
+                            def output = new File(outDir, path)
+                            findAnnotatedClasses(it, output)
                             findAppJointClass(it)
-                            new File(outDir, path).bytes = it.bytes
+                            output.bytes = it.bytes
                         }
                     }
                 }
@@ -194,10 +204,174 @@ class AppJointTransform extends Transform {
                 }
             }
 
-            mProject.logger.info("moduleApplications: $moduleApplications")
-            mProject.logger.info("appApplications: $appApplications")
-            mProject.logger.info("routerAndImpl: $routerAndImpl")
-            mProject.logger.info("appJointClassFile: $appJointClassFile")
+        }
+        mProject.logger.info("moduleApplications: $moduleApplications")
+        mProject.logger.info("appApplications: $appApplications")
+        mProject.logger.info("routerAndImpl: $routerAndImpl")
+        mProject.logger.info("appJointClassFile: $appJointClassFile")
+
+
+        // Insert code to AppJoint class
+        ClassReader cr = new ClassReader(new FileInputStream(appJointClassFile))
+        ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS)
+        ClassVisitor classVisitor = new AppJointClassVisitor(cw)
+
+        cr.accept(classVisitor, 0)
+
+        def outputFile = new File(
+                appJointJarRepackageFolder,
+                "io/github/prototypez/appjoint/AppJoint.class"
+        )
+        outputFile.bytes = cw.toByteArray()
+
+        Compressor zc = new Compressor(appJointJarDest.getAbsolutePath())
+        zc.compress(appJointJarRepackageFolder.getAbsolutePath())
+
+        // Insert code to Application of App
+        appApplications.each {File classFile, File output ->
+            ClassReader reader = new ClassReader(new FileInputStream(classFile))
+            ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS)
+            ClassVisitor visitor = new ApplicationClassVisitor(writer)
+
+            reader.accept(visitor, 0)
+            output.bytes = writer.toByteArray()
+        }
+
+    }
+
+    // Visit and change the AppJoint Class
+    class AppJointClassVisitor extends ClassVisitor {
+
+        AppJointClassVisitor(ClassVisitor cv) {
+            super(Opcodes.ASM5, cv)
+        }
+
+        @Override
+        MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
+            mProject.logger.info("visiting method: $name")
+            if (name == "<init>") {
+                return new AddCodeToConstructorVisitor(methodVisitor)
+            }
+            return methodVisitor;
+        }
+    }
+
+    class AddCodeToConstructorVisitor extends MethodVisitor {
+
+        AddCodeToConstructorVisitor(MethodVisitor mv) {
+            super(Opcodes.ASM5, mv)
+        }
+
+        @Override
+        void visitInsn(int opcode) {
+            switch (opcode) {
+                case Opcodes.IRETURN:
+                case Opcodes.FRETURN:
+                case Opcodes.ARETURN:
+                case Opcodes.LRETURN:
+                case Opcodes.DRETURN:
+                case Opcodes.RETURN:
+                    moduleApplications.each { insertApplicationAdd(it) }
+                    routerAndImpl.each {router, impl -> insertRoutersPut(router, impl)}
+                    break
+            }
+            super.visitInsn(opcode)
+        }
+
+        /**
+         * add "moduleApplications.add(new Application())" statement
+         * @param applicationName internal name like "android/app/Application"
+         */
+        void insertApplicationAdd(String applicationName) {
+            mv.visitVarInsn(Opcodes.ALOAD, 0)
+            mv.visitFieldInsn(Opcodes.GETFIELD, "io/github/prototypez/appjoint/AppJoint", "moduleApplications", "Ljava/util/List;")
+            mv.visitTypeInsn(Opcodes.NEW, applicationName)
+            mv.visitInsn(Opcodes.DUP)
+            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, applicationName, "<init>", "()V", false)
+            mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true)
+            mv.visitInsn(Opcodes.POP)
+        }
+
+        void insertRoutersPut(String router, String impl) {
+            mv.visitVarInsn(Opcodes.ALOAD, 0)
+            mv.visitFieldInsn(Opcodes.GETFIELD, "io/github/prototypez/appjoint/AppJoint", "routersMap", "Ljava/util/Map;")
+            mv.visitLdcInsn(Type.getObjectType(router))
+            mv.visitLdcInsn(Type.getObjectType(impl))
+            mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true)
+            mv.visitInsn(Opcodes.POP)
+        }
+    }
+
+    // Visit and change the classes annotated with @Modules annotation
+    class ApplicationClassVisitor extends ClassVisitor{
+
+        boolean onCreateDefined;
+        boolean attachBaseContextDefined;
+
+        ApplicationClassVisitor(ClassVisitor cv) {
+            super(Opcodes.ASM5, cv)
+        }
+
+        @Override
+        MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
+            mProject.logger.info("visiting method: $access, $name, $desc, $signature, $exceptions")
+            switch (name + desc) {
+                case "onCreate()V":
+                    onCreateDefined = true
+                    return new AddCallAppJointMethodVisitor(methodVisitor, "onCreate", "()V", false)
+                case "attachBaseContext(Landroid/content/Context;)V":
+                    attachBaseContextDefined = true
+                    return new AddCallAppJointMethodVisitor(methodVisitor, "attachBaseContext", "(Landroid/content/Context;)V", true)
+
+            }
+            return methodVisitor
+        }
+
+        @Override
+        void visitEnd() {
+            if (!attachBaseContextDefined) {
+                MethodVisitor methodVisitor = this.visitMethod(4, "attachBaseContext", "(Landroid/content/Context;)V", null, null)
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0)
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 1)
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "android/app/Application", "attachBaseContext", "(Landroid/content/Context;)V", false)
+                methodVisitor.visitInsn(Opcodes.RETURN)
+                methodVisitor.visitEnd()
+            }
+            super.visitEnd()
+        }
+    }
+
+    class AddCallAppJointMethodVisitor extends MethodVisitor {
+
+        String name
+        String desc
+        boolean aLoad1
+
+        AddCallAppJointMethodVisitor(MethodVisitor mv, String name, String desc, boolean aLoad1) {
+            super(Opcodes.ASM5, mv)
+            this.name = name
+            this.desc = desc
+            this.aLoad1 = aLoad1
+        }
+
+        void visitInsn(int opcode) {
+            switch (opcode) {
+                case Opcodes.IRETURN:
+                case Opcodes.FRETURN:
+                case Opcodes.ARETURN:
+                case Opcodes.LRETURN:
+                case Opcodes.DRETURN:
+                case Opcodes.RETURN:
+                    mv.visitMethodInsn(Opcodes.INVOKESTATIC, "io/github/prototypez/appjoint/AppJoint", "get", "()Lio/github/prototypez/appjoint/AppJoint;", false)
+                    if (aLoad1) {
+                        mv.visitVarInsn(Opcodes.ALOAD, 1)
+                    }
+                    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "io/github/prototypez/appjoint/AppJoint", name, desc, false)
+                    break
+            }
+            super.visitInsn(opcode)
         }
     }
 
@@ -219,7 +393,7 @@ class AppJointTransform extends Transform {
     }
 
     // Check @ModuleSpec, @ModulesSpec, @RouterProvider existence
-    void findAnnotatedClasses(File file) {
+    void findAnnotatedClasses(File file, File output) {
         if (!file.exists() || !file.name.endsWith(".class")) {
             return
         }
@@ -233,7 +407,7 @@ class AppJointTransform extends Transform {
                         moduleApplications.add(cr.className)
                         break
                     case "Lio/github/prototypez/appjoint/core/ModulesSpec;":
-                        appApplications[cr.className] = file
+                        appApplications[file] = output
                         break
                     case "Lio/github/prototypez/appjoint/core/RouterProvider;":
                         cr.interfaces.each { routerAndImpl[it] = cr.className }
