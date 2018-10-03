@@ -11,16 +11,16 @@ import io.github.prototypez.router.FuncMonkeyRouter2;
 /**
  * Created by zhounl on 2017/11/28.
  */
-@ModuleSpec("tiger")
+@ModuleSpec
 public class TigerApplication extends Application {
 
     @Override
     public void onCreate() {
         super.onCreate();
-        AppJoint.get().getRouter(FuncMonkeyRouter.class).startMonkey();
-        AppJoint.get().getRouter(FuncMonkeyRouter.class).startMonkeyForResult();
-        AppJoint.get().getRouter(FuncMonkeyRouter2.class).startMonkey();
-        AppJoint.get().getRouter(FuncMonkeyRouter2.class).startMonkeyForResult();
-        AppJoint.get().getRouter(FuncAppRouter.class).callApp();
+        AppJoint.get().service(FuncMonkeyRouter.class).startMonkey();
+        AppJoint.get().service(FuncMonkeyRouter.class).startMonkeyForResult();
+        AppJoint.get().service(FuncMonkeyRouter2.class).startMonkey();
+        AppJoint.get().service(FuncMonkeyRouter2.class).startMonkeyForResult();
+        AppJoint.get().service(FuncAppRouter.class).callApp();
     }
 }

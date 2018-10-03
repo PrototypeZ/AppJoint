@@ -5,7 +5,7 @@ import android.util.Log;
 
 import io.github.prototypez.appjoint.core.ModuleSpec;
 
-@ModuleSpec("module2")
+@ModuleSpec
 public class Module2Application extends Application {
 
     @Override

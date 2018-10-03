@@ -6,7 +6,7 @@ import io.github.prototypez.router.Module2Router;
 
 public class RouterServices {
 
-    public static AppRouter sAppRouter = AppJoint.getRouter(AppRouter.class);
+    public static AppRouter sAppRouter = AppJoint.service(AppRouter.class);
 
-    public static Module2Router sModule2Router = AppJoint.getRouter(Module2Router.class);
+    public static Module2Router sModule2Router = AppJoint.service(Module2Router.class);
 }

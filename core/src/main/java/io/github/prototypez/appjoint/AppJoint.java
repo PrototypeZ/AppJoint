@@ -75,7 +75,7 @@ public class AppJoint {
         }
     }
 
-    public static synchronized <T> T getRouter(Class<T> routerType) {
+    public static synchronized <T> T service(Class<T> routerType) {
         T requiredRouter = null;
         if (!get().routerInstanceMap.containsKey(routerType)) {
             try {

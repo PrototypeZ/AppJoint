@@ -5,10 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
-import io.github.prototypez.appjoint.core.RouterProvider;
+import io.github.prototypez.appjoint.core.ServiceProvider;
 import io.github.prototypez.router.Module1Router;
 
-@RouterProvider
+@ServiceProvider
 public class Module1RouterImpl implements Module1Router {
     @Override
     public void startModule1Activity(Context context) {

@@ -6,7 +6,7 @@ import android.util.Log;
 
 import io.github.prototypez.appjoint.core.ModuleSpec;
 
-@ModuleSpec("module1")
+@ModuleSpec
 public class Module1Application extends Application {
 
     public static Application INSTANCE;

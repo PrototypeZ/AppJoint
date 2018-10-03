@@ -18,11 +18,11 @@ class AppJointTransform extends Transform {
      */
     def moduleApplications = []
     /**
-     * Classes annotated with @ModulesSpec
+     * Classes annotated with @AppSpec
      */
     def appApplications = [:]
     /**
-     * Classes annotated with @RouterProvider
+     * Classes annotated with @ServiceProvider
      */
     def routerAndImpl = [:]
 
@@ -72,7 +72,7 @@ class AppJointTransform extends Transform {
 
             // Maybe contains the AppJoint class to write code into
             def possibleStubs = []
-            // Maybe contains @ModuleSpec, @ModulesSpec or @RouterProvider
+            // Maybe contains @ModuleSpec, @AppSpec or @ServiceProvider
             def possibleModules = []
 
             input.jarInputs.each { jarInput ->
@@ -102,7 +102,7 @@ class AppJointTransform extends Transform {
             }
 
             // Inside submodules, find class annotated with
-            // @ModuleSpec, @ModulesSpec or @RouterProvider
+            // @ModuleSpec, @AppSpec or @ServiceProvider
             possibleModules.each { jarInput ->
                 def jarName = jarInput.name
 
@@ -210,7 +210,6 @@ class AppJointTransform extends Transform {
         mProject.logger.info("routerAndImpl: $routerAndImpl")
         mProject.logger.info("appJointClassFile: $appJointClassFile")
 
-
         // Insert code to AppJoint class
         ClassReader cr = new ClassReader(new FileInputStream(appJointClassFile))
         ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS)
@@ -228,7 +227,7 @@ class AppJointTransform extends Transform {
         zc.compress(appJointJarRepackageFolder.getAbsolutePath())
 
         // Insert code to Application of App
-        appApplications.each {File classFile, File output ->
+        appApplications.each { File classFile, File output ->
             ClassReader reader = new ClassReader(new FileInputStream(classFile))
             ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS)
             ClassVisitor visitor = new ApplicationClassVisitor(writer)
@@ -273,7 +272,7 @@ class AppJointTransform extends Transform {
                 case Opcodes.DRETURN:
                 case Opcodes.RETURN:
                     moduleApplications.each { insertApplicationAdd(it) }
-                    routerAndImpl.each {router, impl -> insertRoutersPut(router, impl)}
+                    routerAndImpl.each { router, impl -> insertRoutersPut(router, impl) }
                     break
             }
             super.visitInsn(opcode)
@@ -304,10 +303,15 @@ class AppJointTransform extends Transform {
     }
 
     // Visit and change the classes annotated with @Modules annotation
-    class ApplicationClassVisitor extends ClassVisitor{
+    class ApplicationClassVisitor extends ClassVisitor {
 
-        boolean onCreateDefined;
-        boolean attachBaseContextDefined;
+        boolean onCreateDefined
+        boolean attachBaseContextDefined
+        boolean onConfigurationChangedDefined
+        boolean onLowMemoryDefined
+        boolean onTerminateDefined
+        boolean onTrimMemoryDefined
+
 
         ApplicationClassVisitor(ClassVisitor cv) {
             super(Opcodes.ASM5, cv)
@@ -320,10 +324,22 @@ class AppJointTransform extends Transform {
             switch (name + desc) {
                 case "onCreate()V":
                     onCreateDefined = true
-                    return new AddCallAppJointMethodVisitor(methodVisitor, "onCreate", "()V", false)
+                    return new AddCallAppJointMethodVisitor(methodVisitor, "onCreate", "()V", false, false)
                 case "attachBaseContext(Landroid/content/Context;)V":
                     attachBaseContextDefined = true
-                    return new AddCallAppJointMethodVisitor(methodVisitor, "attachBaseContext", "(Landroid/content/Context;)V", true)
+                    return new AddCallAppJointMethodVisitor(methodVisitor, "attachBaseContext", "(Landroid/content/Context;)V", true, false)
+                case "onConfigurationChanged(Landroid/content/res/Configuration;)V":
+                    onConfigurationChangedDefined = true
+                    return new AddCallAppJointMethodVisitor(methodVisitor, "onConfigurationChanged", "(Landroid/content/res/Configuration;)V", true, false)
+                case "onLowMemory()V":
+                    onLowMemoryDefined = true
+                    return new AddCallAppJointMethodVisitor(methodVisitor, "onLowMemory", "()V", false, false)
+                case "onTerminate()V":
+                    onTerminateDefined = true
+                    return new AddCallAppJointMethodVisitor(methodVisitor, "onTerminate", "()V", false, false)
+                case "onTrimMemory(I)V":
+                    onTrimMemoryDefined = true
+                    return new AddCallAppJointMethodVisitor(methodVisitor, "onTrimMemory", "(I)V", false, true)
 
             }
             return methodVisitor
@@ -332,14 +348,38 @@ class AppJointTransform extends Transform {
         @Override
         void visitEnd() {
             if (!attachBaseContextDefined) {
-                MethodVisitor methodVisitor = this.visitMethod(4, "attachBaseContext", "(Landroid/content/Context;)V", null, null)
-                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0)
-                methodVisitor.visitVarInsn(Opcodes.ALOAD, 1)
-                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "android/app/Application", "attachBaseContext", "(Landroid/content/Context;)V", false)
-                methodVisitor.visitInsn(Opcodes.RETURN)
-                methodVisitor.visitEnd()
+                defineMethod(4, "attachBaseContext", "(Landroid/content/Context;)V", true, false)
+            }
+            if (!onCreateDefined) {
+                defineMethod(1, "onCreate", "()V", false, false)
+            }
+            if (!onConfigurationChangedDefined) {
+                defineMethod(1, "onConfigurationChanged", "(Landroid/content/res/Configuration;)V", true, false)
+            }
+            if (!onLowMemoryDefined) {
+                defineMethod(1, "onLowMemory", "()V", false, false)
+            }
+            if (!onTerminateDefined) {
+                defineMethod(1, "onTerminate", "()V", false, false)
+            }
+            if (!onTrimMemoryDefined) {
+                defineMethod(1, "onTrimMemory", "(I)V", false, true)
             }
             super.visitEnd()
+        }
+
+        void defineMethod(int access, String name, String desc, boolean aLoad1, boolean iLoad1) {
+            MethodVisitor methodVisitor = this.visitMethod(access, name, desc, null, null)
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0)
+            if (aLoad1) {
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 1)
+            }
+            if (iLoad1) {
+                methodVisitor.visitVarInsn(Opcodes.ILOAD, 1)
+            }
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "android/app/Application", name, desc, false)
+            methodVisitor.visitInsn(Opcodes.RETURN)
+            methodVisitor.visitEnd()
         }
     }
 
@@ -348,12 +388,14 @@ class AppJointTransform extends Transform {
         String name
         String desc
         boolean aLoad1
+        boolean iLoad1
 
-        AddCallAppJointMethodVisitor(MethodVisitor mv, String name, String desc, boolean aLoad1) {
+        AddCallAppJointMethodVisitor(MethodVisitor mv, String name, String desc, boolean aLoad1, boolean iLoad1) {
             super(Opcodes.ASM5, mv)
             this.name = name
             this.desc = desc
             this.aLoad1 = aLoad1
+            this.iLoad1 = iLoad1
         }
 
         void visitInsn(int opcode) {
@@ -367,6 +409,9 @@ class AppJointTransform extends Transform {
                     mv.visitMethodInsn(Opcodes.INVOKESTATIC, "io/github/prototypez/appjoint/AppJoint", "get", "()Lio/github/prototypez/appjoint/AppJoint;", false)
                     if (aLoad1) {
                         mv.visitVarInsn(Opcodes.ALOAD, 1)
+                    }
+                    if (iLoad1) {
+                        mv.visitVarInsn(Opcodes.ILOAD, 1)
                     }
                     mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "io/github/prototypez/appjoint/AppJoint", name, desc, false)
                     break
@@ -392,7 +437,7 @@ class AppJointTransform extends Transform {
         }, 0)
     }
 
-    // Check @ModuleSpec, @ModulesSpec, @RouterProvider existence
+    // Check @ModuleSpec, @AppSpec, @ServiceProvider existence
     void findAnnotatedClasses(File file, File output) {
         if (!file.exists() || !file.name.endsWith(".class")) {
             return
@@ -406,10 +451,10 @@ class AppJointTransform extends Transform {
                     case "Lio/github/prototypez/appjoint/core/ModuleSpec;":
                         moduleApplications.add(cr.className)
                         break
-                    case "Lio/github/prototypez/appjoint/core/ModulesSpec;":
+                    case "Lio/github/prototypez/appjoint/core/AppSpec;":
                         appApplications[file] = output
                         break
-                    case "Lio/github/prototypez/appjoint/core/RouterProvider;":
+                    case "Lio/github/prototypez/appjoint/core/ServiceProvider;":
                         cr.interfaces.each { routerAndImpl[it] = cr.className }
                         break
                 }

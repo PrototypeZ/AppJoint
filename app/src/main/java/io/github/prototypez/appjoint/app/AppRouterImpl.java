@@ -1,12 +1,12 @@
 package io.github.prototypez.appjoint.app;
 
 
-import io.github.prototypez.appjoint.core.RouterProvider;
+import io.github.prototypez.appjoint.core.ServiceProvider;
 import io.github.prototypez.router.AppRouter;
 import io.github.prototypez.router.app.Callback;
 import io.reactivex.Observable;
 
-@RouterProvider
+@ServiceProvider
 public class AppRouterImpl implements AppRouter {
 
     @Override

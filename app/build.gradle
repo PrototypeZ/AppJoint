@@ -39,13 +39,11 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 
-    implementation project(":tiger")
-    implementation project(":monkey")
+//    implementation project(":tiger")
+//    implementation project(":monkey")
     implementation project(":router")
     implementation project(":module1")
     implementation project(":module2")
 
     implementation project(":core")
-
-    annotationProcessor project(":processor")
 }

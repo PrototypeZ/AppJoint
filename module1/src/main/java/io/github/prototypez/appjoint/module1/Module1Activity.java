@@ -1,7 +1,7 @@
 package io.github.prototypez.appjoint.module1;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 
 import io.github.prototypez.appjoint.AppJoint;
 import io.github.prototypez.router.AppRouter;
@@ -14,7 +14,7 @@ public class Module1Activity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_module1);
 
-        AppRouter appRouter = AppJoint.getRouter(AppRouter.class);
+        AppRouter appRouter = AppJoint.service(AppRouter.class);
 
         String syncResult = appRouter.syncMethodOfApp();
         appRouter.asyncMethod1OfApp()
