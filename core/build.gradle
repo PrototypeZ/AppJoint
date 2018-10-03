@@ -1,6 +1,14 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
-group='com.github.PrototypeZ'
+apply plugin: 'com.novoda.bintray-release'
+
+publish {
+    userOrg = 'prototypez'
+    groupId = 'io.github.prototypez'
+    artifactId = 'app-joint-core'
+    publishVersion = '1.0'
+    desc = 'Joint Applications for multi-module Android project'
+    website = 'https://github.com/PrototypeZ/AppJoint'
+}
 
 android {
     compileSdkVersion 26
