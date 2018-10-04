@@ -4,8 +4,8 @@ import android.util.Log;
 
 import io.github.prototypez.appjoint.module1.Module1Application;
 import io.github.prototypez.appjoint.module1.RouterServices;
-import io.github.prototypez.appjoint.module1.standalone.mock.AppRouterMock;
-import io.github.prototypez.appjoint.module1.standalone.mock.Module2RouterMock;
+import io.github.prototypez.appjoint.module1.standalone.mock.AppServiceMock;
+import io.github.prototypez.appjoint.module1.standalone.mock.Module2ServiceMock;
 
 public class Module1StandaloneApplication extends Module1Application {
 
@@ -17,7 +17,7 @@ public class Module1StandaloneApplication extends Module1Application {
         Log.i("module1Standalone", "module1Standalone init is called");
 
         // Replace instances inside RouterServices
-        RouterServices.sAppRouter = new AppRouterMock();
-        RouterServices.sModule2Router = new Module2RouterMock();
+        RouterServices.sAppService = new AppServiceMock();
+        RouterServices.sModule2Service = new Module2ServiceMock();
     }
 }

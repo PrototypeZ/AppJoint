@@ -1,4 +1,4 @@
-include ':core'
+include ':core', ':commons'
 include ':plugin'
 
 include ':app'

@@ -1,14 +1,4 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.novoda.bintray-release'
-
-publish {
-    userOrg = 'prototypez'
-    groupId = 'io.github.prototypez'
-    artifactId = 'app-joint-core'
-    publishVersion = '1.0'
-    desc = 'Joint Applications for multi-module Android project'
-    website = 'https://github.com/PrototypeZ/AppJoint'
-}
 
 android {
     compileSdkVersion 27
@@ -32,14 +22,14 @@ android {
         }
     }
 
-    compileOptions {
-        targetCompatibility 1.8
-        sourceCompatibility 1.8
-    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    api fileTree(dir: 'libs', include: ['*.jar'])
+    api 'com.android.support.constraint:constraint-layout:1.1.3'
+    api 'com.android.support:appcompat-v7:27.1.1'
+    api 'com.android.support:design:27.1.1'
+    api 'io.reactivex.rxjava2:rxjava:2.2.2'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

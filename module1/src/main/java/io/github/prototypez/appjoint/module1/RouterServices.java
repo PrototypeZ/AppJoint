@@ -1,12 +1,12 @@
 package io.github.prototypez.appjoint.module1;
 
 import io.github.prototypez.appjoint.AppJoint;
-import io.github.prototypez.router.AppRouter;
-import io.github.prototypez.router.Module2Router;
+import io.github.prototypez.service.app.AppService;
+import io.github.prototypez.service.module2.Module2Service;
 
 public class RouterServices {
 
-    public static AppRouter sAppRouter = AppJoint.service(AppRouter.class);
+    public static AppService sAppService = AppJoint.service(AppService.class);
 
-    public static Module2Router sModule2Router = AppJoint.service(Module2Router.class);
+    public static Module2Service sModule2Service = AppJoint.service(Module2Service.class);
 }
