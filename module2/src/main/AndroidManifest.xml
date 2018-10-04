@@ -1,2 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="io.github.prototypez.appjoint.module2"/>
+    package="io.github.prototypez.appjoint.module2">
+  <application>
+    <activity android:name=".Module2Activity"/>
+  </application>
+</manifest>

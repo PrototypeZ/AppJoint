@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+  <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:padding="10dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+      <Button
+          android:id="@+id/btnStartActivityOfApp"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/startActivityOfApp"/>
+
+      <FrameLayout
+          android:id="@+id/vAppFragmentPlaceholder"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"/>
+
+      <Button
+          android:id="@+id/btnGetFragmentOfApp"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/getFragmentOfApp"/>
+
+      <Button
+          android:id="@+id/btnCallMethodSyncOfApp"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/callMethodSyncOfApp"/>
+
+      <Button
+          android:id="@+id/btnCallMethodAsyncOfApp"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/callMethodAsyncOfApp"/>
+
+      <Button
+          android:id="@+id/btnObservableOfApp"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/observableOfApp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginLeft="2dp">
+      <Button
+          android:id="@+id/btnStartActivityOfModule2"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/startActivityOfModule2"/>
+
+      <FrameLayout
+          android:id="@+id/vModule2FragmentPlaceholder"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"/>
+
+      <Button
+          android:id="@+id/btnGetFragmentOfModule2"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/getFragmentOfModule2"/>
+
+      <Button
+          android:id="@+id/btnCallMethodSyncOfModule2"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/callMethodSyncOfModule2"/>
+
+      <Button
+          android:id="@+id/btnCallMethodAsyncOfModule2"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/callMethodAsyncOfModule2"/>
+
+      <Button
+          android:id="@+id/btnObservableOfModule2"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:text="@string/observableOfModule2"/>
+    </LinearLayout>
+
+
+    <!-- module2 action start -->
+
+
+  </LinearLayout>
+</ScrollView>

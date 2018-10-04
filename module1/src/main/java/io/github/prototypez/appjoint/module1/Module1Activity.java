@@ -2,7 +2,6 @@ package io.github.prototypez.appjoint.module1;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-
 import io.github.prototypez.appjoint.AppJoint;
 import io.github.prototypez.service.app.AppService;
 import io.github.prototypez.service.app.callback.AppCallback;
@@ -22,7 +21,7 @@ public class Module1Activity extends AppCompatActivity {
                 .subscribe((result) -> {
                     // handle asyncResult
                 });
-        appService.callMethodAsync2OfApp((AppCallback<AppEntity>) data -> {
+      appService.callMethodAsyncOfApp((AppCallback<AppEntity>) data -> {
             // handle asyncResult
         });
     }

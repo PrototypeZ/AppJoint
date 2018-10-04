@@ -1,5 +1,8 @@
 apply plugin: 'com.android.application'
 apply plugin: 'app-joint'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
 android {
     compileSdkVersion 27
 

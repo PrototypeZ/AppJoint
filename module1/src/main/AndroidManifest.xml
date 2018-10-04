@@ -3,7 +3,9 @@
     package="io.github.prototypez.appjoint.module1">
 
     <application>
-        <activity android:name=".Module1Activity"></activity>
+        <activity android:name=".Module1Activity"/>
+        <activity android:name=".MainActivity">
+        </activity>
     </application>
 
 </manifest>
