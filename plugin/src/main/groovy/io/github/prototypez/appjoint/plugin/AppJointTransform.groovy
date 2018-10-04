@@ -76,6 +76,7 @@ class AppJointTransform extends Transform {
             def possibleModules = []
 
             input.jarInputs.each { jarInput ->
+                if (!jarInput.file.exists()) return
                 mProject.logger.info("jar input:" + jarInput.file.getAbsolutePath())
                 def jarName = jarInput.name
                 if (jarName.endsWith(".jar")) {
@@ -192,6 +193,7 @@ class AppJointTransform extends Transform {
                             def output = new File(outDir, path)
                             findAnnotatedClasses(it, output)
                             findAppJointClass(it)
+                            if (!output.parentFile.exists()) output.parentFile.mkdirs()
                             output.bytes = it.bytes
                         }
                     }
