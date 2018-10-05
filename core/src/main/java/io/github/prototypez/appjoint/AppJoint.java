@@ -4,7 +4,6 @@ import android.app.Application;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Configuration;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -25,7 +24,6 @@ public class AppJoint {
     private Map<Class, Object> routerInstanceMap = new HashMap<>();
 
     private AppJoint() { }
-
 
     public void attachBaseContext(Context context) {
         for (Application app : moduleApplications) {
@@ -88,6 +86,14 @@ public class AppJoint {
             requiredRouter = (T) get().routerInstanceMap.get(routerType);
         }
         return requiredRouter;
+    }
+
+    public List<Application> moduleApplications() {
+        return moduleApplications;
+    }
+
+    public Map<Class, Class> routersMap() {
+        return routersMap;
     }
 
     public static AppJoint get() {
