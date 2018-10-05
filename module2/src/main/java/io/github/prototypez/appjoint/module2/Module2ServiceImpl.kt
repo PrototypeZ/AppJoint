@@ -3,8 +3,8 @@ package io.github.prototypez.appjoint.module2
 import android.content.Context
 import android.support.v4.app.Fragment
 import io.github.prototypez.appjoint.core.ServiceProvider
-import io.github.prototypez.service.module1.callback.Module1Callback
 import io.github.prototypez.service.module2.Module2Service
+import io.github.prototypez.service.module2.callback.Module2Callback
 import io.github.prototypez.service.module2.entity.Module2Entity
 import io.reactivex.Observable
 
@@ -26,7 +26,7 @@ class Module2ServiceImpl : Module2Service {
     return "syncMethodResultModule2"
   }
 
-  override fun callMethodAsyncOfModule2(callback: Module1Callback<Module2Entity>) {
+  override fun callMethodAsyncOfModule2(callback: Module2Callback<Module2Entity>) {
     Thread { callback.onResult(Module2Entity("asyncMethodResultModule2")) }.start()
   }
 

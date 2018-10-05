@@ -10,7 +10,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "io.github.prototypez.module2.standalone"
+        applicationId "io.github.prototypez.appjoint.module2.standalone"
         minSdkVersion 17
         targetSdkVersion 27
         versionCode 1

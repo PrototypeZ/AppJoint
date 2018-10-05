@@ -1,12 +1,10 @@
 package io.github.prototypez.appjoint.module2;
 
-import android.app.Application;
 import android.util.Log;
-
+import io.github.prototypez.appjoint.commons.AppBase;
 import io.github.prototypez.appjoint.core.ModuleSpec;
 
-@ModuleSpec
-public class Module2Application extends Application {
+@ModuleSpec public class Module2Application extends AppBase {
 
     @Override
     public void onCreate() {
