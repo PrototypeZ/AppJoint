@@ -8,7 +8,7 @@ import io.github.prototypez.appjoint.module1.standalone.mock.Module2ServiceMock;
 
 public class Module1StandaloneApplication extends Module1Application {
 
-    @Override
+  @Override
     public void onCreate() {
         // module1 init inside super.onCreate()
         super.onCreate();

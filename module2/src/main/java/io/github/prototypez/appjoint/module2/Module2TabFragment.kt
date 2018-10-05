@@ -37,18 +37,18 @@ class Module2TabFragment : Fragment() {
     }
 
     btnCallMethodSyncOfApp.setOnClickListener {
-      T.s(context, "From app module: ${Services.sAppService.callMethodSyncOfApp()}")
+      T.s("From app module: ${Services.sAppService.callMethodSyncOfApp()}")
     }
 
     btnCallMethodAsyncOfApp.setOnClickListener { _ ->
       Services.sAppService.callMethodAsyncOfApp {
-        btnCallMethodAsyncOfApp.post { T.s(context, "From app module: ${it.data}") }
+        btnCallMethodAsyncOfApp.post { T.s("From app module: ${it.data}") }
       }
     }
 
     btnObservableOfApp.setOnClickListener { _ ->
       Services.sAppService.observableOfApp()
-          .subscribe { T.s(context, "From app module: ${it.data}") }
+          .subscribe { T.s("From app module: ${it.data}") }
     }
 
     // module1 action setup
@@ -65,18 +65,18 @@ class Module2TabFragment : Fragment() {
     }
 
     btnCallMethodSyncOfModule1.setOnClickListener {
-      T.s(context, "From module1: ${Services.sModule1Service.callMethodSyncOfModule1()}")
+      T.s("From module1: ${Services.sModule1Service.callMethodSyncOfModule1()}")
     }
 
     btnCallMethodAsyncOfModule1.setOnClickListener { _ ->
       Services.sModule1Service.callMethodAsyncOfModule1 {
-        btnCallMethodAsyncOfModule1.post { T.s(context, "From module1: ${it.data}") }
+        btnCallMethodAsyncOfModule1.post { T.s("From module1: ${it.data}") }
       }
     }
 
     btnObservableOfModule1.setOnClickListener { _ ->
       Services.sModule1Service.observableOfModule1()
-          .subscribe { T.s(context, "From module1: ${it.data}") }
+          .subscribe { T.s("From module1: ${it.data}") }
     }
   }
 
