@@ -9,9 +9,4 @@ public class Services {
     public static AppService sAppService = AppJoint.service(AppService.class);
 
     public static Module2Service sModule2Service = AppJoint.service(Module2Service.class);
-
-    //    /**
-    //     * Service of Module1 self, there's no need to call AppJoint.service
-    //     */
-    //    public static Module1Service sModule1Service = new Module1ServiceImpl();
 }

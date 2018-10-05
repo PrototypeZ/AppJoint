@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".Module1Activity"
+    android:layout_height="wrap_content"
+    android:background="@color/colorAccent"
 >
   <TextView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="@string/activity_from_module2"
-      android:layout_gravity="center"
-  />
+      android:paddingLeft="4dp"
+      android:text="@string/fragment_from_module2"/>
 </FrameLayout>
