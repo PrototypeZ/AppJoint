@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import io.github.prototypez.appjoint.commons.T
+import io.github.prototypez.service.module1.callback.Module1Callback
 import kotlinx.android.synthetic.main.fragment_module2_tab.btnCallMethodAsyncOfApp
 import kotlinx.android.synthetic.main.fragment_module2_tab.btnCallMethodAsyncOfModule1
 import kotlinx.android.synthetic.main.fragment_module2_tab.btnCallMethodSyncOfApp
@@ -54,7 +55,7 @@ class Module2TabFragment : Fragment() {
     // module1 action setup
 
     btnStartActivityOfModule1.setOnClickListener {
-      Services.sModule1Service.startActivityOfModule1(context)
+      Services.sModule1Service.startActivityOfModule1(context!!)
     }
 
     btnGetFragmentOfModule1.setOnClickListener {
@@ -69,9 +70,9 @@ class Module2TabFragment : Fragment() {
     }
 
     btnCallMethodAsyncOfModule1.setOnClickListener { _ ->
-      Services.sModule1Service.callMethodAsyncOfModule1 {
+      Services.sModule1Service.callMethodAsyncOfModule1(Module1Callback {
         btnCallMethodAsyncOfModule1.post { T.s("From module1: ${it.data}") }
-      }
+      })
     }
 
     btnObservableOfModule1.setOnClickListener { _ ->

@@ -10,7 +10,7 @@ import io.reactivex.Observable
 
 class Module1ServiceMock : Module1Service {
 
-  override fun startActivityOfModule1(context: Context?) {
+  override fun startActivityOfModule1(context: Context) {
     T.s("Mock: startActivityOfModule1 called")
   }
 
