@@ -43,14 +43,14 @@ apply plugin: 'app-joint'
 ```kotlin
 interface Module1Service {
 
-  /*
-     * 启动 moduel1 模块的 Activity
-     */
+  /**
+   * 启动 moduel1 模块的 Activity
+   */
   fun startActivityOfModule1(context: Context)
 
-  /*
-     * 调用 module1 模块的 Fragment
-     */
+  /**
+   * 调用 module1 模块的 Fragment
+   */
   fun obtainFragmentOfModule1(): Fragment
 
   /**
@@ -135,13 +135,33 @@ class App : Application() {
 }
 ```
 
-## 其他问题
+**AppJoint** 可以保证，当标记了 `@AppSpec` 的类被系统回调属于 `Application` 的某个生命周期函数（例如 `onCreate`、 `attachBaseContext`）时，那些标记了 `@ModuleSpec` 的类也会被回调相同的生命周期方法。 
+
+
+## 组件化的其他问题
 
 除了上面介绍的功能，组件化还涉及许多其它问题，但是这些内容已经不属于 **AppJoint** 的范畴了，它们包括：
 
 + 如何独立编译启动组件化模块，以及切换模块的独立编译模式与全量启动模式。
 + 如何分离模块的独立启动相关逻辑和代码，使 App 处于全量编译时这些逻辑不会被打包进去
 + 如何在模块独立编译模式时，调用其它模块的相关代码也能正常工作。
++ 等等...
+
+如何配合 **AppJoint** 实现一个完整的组件化方案，欢迎阅读：
+
+ [『回归初心：极简 Android 组件化方案 — AppJoint』](https://juejin.im/post/5bb9c0d55188255c7566e1e2)
+
+## FAQ
+
++ Q: AppJoint 支持 Instant Run 吗？
+  
+  A: 支持，请放心使用。
+
++ Q: 需要配置 Proguard 规则吗？
+
+  A: 不需要。
+
+
 
 ## LICENSE
 
