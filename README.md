@@ -156,7 +156,7 @@ class App : Application() {
 
 ## LICENSE
 
-    Copyright (c) 2016-present, SateState Contributors.
+    Copyright (c) 2016-present, AppJoint Contributors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
