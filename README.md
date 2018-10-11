@@ -3,11 +3,15 @@
 
 ![](https://rawcdn.githack.com/PrototypeZ/AppJoint/master/app-joint-logo.png)
 
-极简 Android 组件化方案。仅包含 **3** 个注解加 **1** 个 API，超低学习成本，支持渐进式组件化。
+[中文文档](https://github.com/PrototypeZ/AppJoint/blob/master/README_zh.md)
 
-## 开始接入
+Simple tool to make your multi-module Android development easier! 
 
-1. 在项目根目录的 `build.gradle` 文件中添加 **AppJoint插件** 依赖：
+Only **3** annotations and **1** function call are included. 
+
+## Getting started
+
+1. Add the **AppJoint** plugin dependency to `build.gradle` file in project root:
 
 ```groovy
 buildscript {
@@ -19,7 +23,7 @@ buildscript {
 }
 ```
 
-2. 在主 App 模块和每个组件化的模块添加 **AppJoint** 依赖：
+2. Add the **AppJoint** dependency to every module：
 
 ```groovy
 dependencies {
@@ -27,50 +31,51 @@ dependencies {
     implementation "io.github.prototypez:app-joint-core:{latest_version}"
 }
 ```
-> 代码中的 `{latest_version}` 即最新版本，当前为： [ ![Download](https://api.bintray.com/packages/prototypez/maven/app-joint/images/download.svg) ](https://bintray.com/prototypez/maven/app-joint/_latestVersion)
 
-3. 在主 App 模块应用 **AppJoint插件**： 
+> Currently the latest version is： [ ![Download](https://api.bintray.com/packages/prototypez/maven/app-joint/images/download.svg) ](https://bintray.com/prototypez/maven/app-joint/_latestVersion)
+
+3. Apply the **AppJoint** plugin to your main app module： 
 
 ```groovy
 apply plugin: 'com.android.application'
 apply plugin: 'app-joint'
 ```
 
-## 跨模块方法调用
+## Cross module method invocation
 
-假设 `router` 模块是所有模块都依赖的公共模块，我们可以在 `router` 模块内定义每个业务模块对外暴露的接口，例如我们定义 `module1` 对外暴露的接口 `Module1Service` ：
+Assuming the `router` module is a common module that all the other modules depend on it. Then we can define interfaces that each module wish to provide for other modules to use in the `router` module. For example, the `module1` module provides the `Module1Service` interface for other modules to use:  
 
 ```kotlin
 interface Module1Service {
 
   /**
-   * 启动 moduel1 模块的 Activity
+   * start Activity from moduel1
    */
   fun startActivityOfModule1(context: Context)
 
   /**
-   * 调用 module1 模块的 Fragment
+   * get Fragment from module1 
    */
   fun obtainFragmentOfModule1(): Fragment
 
   /**
-   * 普通的同步方法调用
+   * call synchronous method from module1
    */
   fun callMethodSyncOfModule1(): String
 
   /**
-   * 以 Callback 形式封装的异步方法
+   * call asynchronous method from module1
    */
   fun callMethodAsyncOfModule1(callback: Module1Callback<Module1Entity>)
 
   /**
-   * 以 RxJava 形式封装的异步方法
+   * get RxJava Observable from module1 
    */
   fun observableOfModule1(): Observable<Module1Entity>
 }
 ```
 
-然后我们可以在 `module1` 内实现该接口：
+Then we write an implementation of it insede the `module1` module：
 
 ```kotlin
 @ServiceProvider
@@ -97,17 +102,17 @@ class Module1ServiceImpl : Module1Service {
 }
 ```
 
-需要注意的一点是： 需要在实现类上标记 `@ServiceProvider` 注解。
+Note that we add a `@ServiceProvider` annotation on the class。
 
-最后，我们可以在其他任何模块获得 `Module1Service` 接口的实例，调用里面的所有方法：
+Now, we can get the instance of `Module1Service` anywhere including other modules，as long as we write the codes below：
 
 ```kotlin
 Module1Service service = AppJoint.service(Module1Service.class);
 ```
 
-## 多模块 Application 逻辑合并
+## Merge `Application` logic of modules 
 
-如果您需要您的每个组件化模块可以独立运行, 您可以为每个组件化的模块创建属于该模块的自定义 `Application` 对象，例如：
+You can create a custom `Application` class for each module to run the module standalone, for example：
 
 ```kotlin
 @ModuleSpec
@@ -121,9 +126,9 @@ class Module1Application : Application() {
 }
 ```
 
-需要注意的是，需要在模块的自定义 `Application` 上标记 `@ModuleSpec` 注解。
+Note that the custom `Application` class is annotated with the `@ModuleSpec` annotation.
 
-同时，在主 App 模块的自定义 `Application` 上标记 `@AppSpec` 注解：
+Then add the `@AppSpec` annotation to the custom `Application` class of your main application module.
 
 ```kotlin
 @AppSpec
@@ -135,31 +140,17 @@ class App : Application() {
 }
 ```
 
-**AppJoint** 可以保证，当标记了 `@AppSpec` 的类被系统回调属于 `Application` 的某个生命周期函数（例如 `onCreate`、 `attachBaseContext`）时，那些标记了 `@ModuleSpec` 的类也会被回调相同的生命周期方法。 
-
-
-## 组件化的其他问题
-
-除了上面介绍的功能，组件化还涉及许多其它问题，但是这些内容已经不属于 **AppJoint** 的范畴了，它们包括：
-
-+ 如何独立编译启动组件化模块，以及切换模块的独立编译模式与全量启动模式。
-+ 如何分离模块的独立启动相关逻辑和代码，使 App 处于全量编译时这些逻辑不会被打包进去
-+ 如何在模块独立编译模式时，调用其它模块的相关代码也能正常工作。
-+ 等等...
-
-如何配合 **AppJoint** 实现一个完整的组件化方案，欢迎阅读：
-
- [『回归初心：极简 Android 组件化方案 — AppJoint』](https://juejin.im/post/5bb9c0d55188255c7566e1e2)
+**AppJoint** can ensure that, when the lifecycle methods of the class annotated with `@AppSpec` are called, the corresponding lifecycle methods of the class annoatated with `@ModuleSpec` are called, too. 
 
 ## FAQ
 
-+ Q: AppJoint 支持 Instant Run 吗？
++ Q: Does AppJoint supports Instant Run?
   
-  A: 支持，请放心使用。
+  A: Yes，it's based on Transform API, so no problem.
 
-+ Q: 需要配置 Proguard 规则吗？
++ Q: Do I need to add any Proguard rules for release?
 
-  A: 不需要。
+  A: No, there's no reflection, so you are safe to use Proguard.
 
 
 
