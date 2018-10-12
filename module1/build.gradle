@@ -37,7 +37,7 @@ dependencies {
     implementation project(":commons")
 
 //    implementation project(":core")
-    implementation "io.github.prototypez:app-joint-core:1.0"
+    implementation "io.github.prototypez:app-joint-core:1.1"
 
 
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'

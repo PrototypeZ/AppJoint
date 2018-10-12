@@ -11,7 +11,7 @@ Only **3** annotations and **1** function call are included.
 
 ## Getting started
 
-1. Add the **AppJoint** plugin dependency to `build.gradle` file in project root:
+1. Add the **AppJoint** plugin dependency to the `build.gradle` file in project root:
 
 ```groovy
 buildscript {
@@ -104,15 +104,15 @@ class Module1ServiceImpl : Module1Service {
 
 Note that we add a `@ServiceProvider` annotation on the class。
 
-Now, we can get the instance of `Module1Service` anywhere including other modules，as long as we write the codes below：
+Now, we can get the instance of `Module1Service` anywhere in any module，as long as we write the codes below：
 
-```kotlin
+```java
 Module1Service service = AppJoint.service(Module1Service.class);
 ```
 
-## Merge `Application` logic of modules 
+## Merge custom `Application` logic of modules 
 
-You can create a custom `Application` class for each module to run the module standalone, for example：
+You can create a custom `Application` class for each module in order to run the module standalone, for example：
 
 ```kotlin
 @ModuleSpec
@@ -140,11 +140,11 @@ class App : Application() {
 }
 ```
 
-**AppJoint** can ensure that, when the lifecycle methods of the class annotated with `@AppSpec` are called, the corresponding lifecycle methods of the class annoatated with `@ModuleSpec` are called, too. 
+**AppJoint** can ensure that, when the lifecycle methods(such as `onCreate`, `attachBaseContext`) of the class annotated with `@AppSpec` are called, the same lifecycle methods of the class annoatated with `@ModuleSpec` will be called, too. 
 
 ## FAQ
 
-+ Q: Does AppJoint supports Instant Run?
++ Q: Does AppJoint support Instant Run?
   
   A: Yes，it's based on Transform API, so no problem.
 
