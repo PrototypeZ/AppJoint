@@ -7,7 +7,7 @@ buildscript {
         google()
         jcenter()
         maven { url "https://dl.bintray.com/prototypez/maven/"}
-        maven { url '../repo' }
+//        maven { url '../repo' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.4'

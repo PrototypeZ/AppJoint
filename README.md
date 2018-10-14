@@ -75,7 +75,7 @@ interface Module1Service {
 }
 ```
 
-Then we write an implementation of it insede the `module1` module：
+Then we write an implementation of it inside the `module1` module：
 
 ```kotlin
 @ServiceProvider
