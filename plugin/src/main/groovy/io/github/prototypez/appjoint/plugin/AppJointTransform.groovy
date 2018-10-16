@@ -262,8 +262,8 @@ class AppJointTransform extends Transform {
         @Override
         MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
             MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
-            mProject.logger.info("visiting method: $name")
-            if (name == "<init>") {
+            mProject.logger.info("visiting method: $access, $name, $desc, $signature, $exceptions")
+            if (access == 2 && name == "<init>" && desc == "()V") {
                 return new AddCodeToConstructorVisitor(methodVisitor)
             }
             return methodVisitor;
