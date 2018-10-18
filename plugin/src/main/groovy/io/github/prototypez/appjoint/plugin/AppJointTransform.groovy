@@ -199,10 +199,11 @@ class AppJointTransform extends Transform {
                     }
                 }
 
-                if (dirInput.changedFiles == null || dirInput.changedFiles.isEmpty()) {
-                    dirInput.file.traverse(callback)
-                } else {
+                if (dirInput.changedFiles != null && !dirInput.changedFiles.isEmpty()) {
                     dirInput.changedFiles.keySet().each(callback)
+                }
+                if (dirInput.file != null && dirInput.file.exists()) {
+                    dirInput.file.traverse(callback)
                 }
             }
 
@@ -213,8 +214,8 @@ class AppJointTransform extends Transform {
         mProject.logger.info("appJointClassFile: $appJointClassFile")
 
         // Insert code to AppJoint class
-      def inputStream = new FileInputStream(appJointClassFile)
-      ClassReader cr = new ClassReader(inputStream)
+        def inputStream = new FileInputStream(appJointClassFile)
+        ClassReader cr = new ClassReader(inputStream)
         ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS)
         ClassVisitor classVisitor = new AppJointClassVisitor(cw)
 
@@ -225,30 +226,30 @@ class AppJointTransform extends Transform {
                 "io/github/prototypez/appjoint/AppJoint.class"
         )
         outputFile.bytes = cw.toByteArray()
-      inputStream.close()
+        inputStream.close()
 
         Compressor zc = new Compressor(appJointJarDest.getAbsolutePath())
         zc.compress(appJointJarRepackageFolder.getAbsolutePath())
 
         // Insert code to Application of App
         appApplications.each { File classFile, File output ->
-          inputStream = new FileInputStream(classFile)
-          ClassReader reader = new ClassReader(inputStream)
+            inputStream = new FileInputStream(classFile)
+            ClassReader reader = new ClassReader(inputStream)
             ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS)
             ClassVisitor visitor = new ApplicationClassVisitor(writer)
 
             reader.accept(visitor, 0)
             output.bytes = writer.toByteArray()
-          inputStream.close()
+            inputStream.close()
         }
 
-      moduleApplications = []
-      appApplications = [:]
-      routerAndImpl = [:]
-      appJointClassFile = null
-      appJointClassInJar = false
-      appJointJarRepackageFolder = null
-      appJointJarDest = null
+//        moduleApplications = []
+//        appApplications = [:]
+//        routerAndImpl = [:]
+//        appJointClassFile = null
+//        appJointClassInJar = false
+//        appJointJarRepackageFolder = null
+//        appJointJarDest = null
 
     }
 
@@ -439,8 +440,8 @@ class AppJointTransform extends Transform {
         if (!file.exists() || !file.name.endsWith(".class")) {
             return
         }
-      def inputStream = new FileInputStream(file)
-      ClassReader cr = new ClassReader(inputStream)
+        def inputStream = new FileInputStream(file)
+        ClassReader cr = new ClassReader(inputStream)
         cr.accept(new ClassVisitor(Opcodes.ASM5) {
             @Override
             void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -450,7 +451,7 @@ class AppJointTransform extends Transform {
                 }
             }
         }, 0)
-      inputStream.close()
+        inputStream.close()
     }
 
     // Check @ModuleSpec, @AppSpec, @ServiceProvider existence
@@ -458,8 +459,8 @@ class AppJointTransform extends Transform {
         if (!file.exists() || !file.name.endsWith(".class")) {
             return
         }
-      def inputStream = new FileInputStream(file)
-      ClassReader cr = new ClassReader(inputStream)
+        def inputStream = new FileInputStream(file)
+        ClassReader cr = new ClassReader(inputStream)
         cr.accept(new ClassVisitor(Opcodes.ASM5) {
             @Override
             AnnotationVisitor visitAnnotation(String desc, boolean visible) {
@@ -478,6 +479,6 @@ class AppJointTransform extends Transform {
                 return super.visitAnnotation(desc, visible)
             }
         }, 0)
-      inputStream.close()
+        inputStream.close()
     }
 }
