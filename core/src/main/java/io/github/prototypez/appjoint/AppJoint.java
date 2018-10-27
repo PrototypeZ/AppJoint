@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.github.prototypez.appjoint.util.BinaryKeyMap;
+
 /**
  * Created by zhounl on 2017/11/15.
  */
@@ -20,9 +22,11 @@ public class AppJoint {
 
     private List<Application> moduleApplications = new ArrayList<>();
 
-    private Map<Class, Class> routersMap = new HashMap<>();
+    private BinaryKeyMap<Class, String, Class> routersMap = new BinaryKeyMap<>();
 
-    private SoftReference<Map<Class, Object>> softRouterInstanceMap = new SoftReference<>(new HashMap<>());
+    private SoftReference<BinaryKeyMap<Class, String, Object>> softRouterInstanceMap = new SoftReference<>(new BinaryKeyMap<>());
+
+    public static final String DEFAULT_NAME = "__app_joint_default";
 
     private AppJoint() { }
 
@@ -75,16 +79,18 @@ public class AppJoint {
     }
 
     public static synchronized <T> T service(Class<T> routerType) {
-        T requiredRouter = null;
-        if (!get().getRouterInstanceMap().containsKey(routerType)) {
+        return service(routerType, DEFAULT_NAME);
+    }
+
+    public static synchronized <T> T service(Class<T> routerType, String name) {
+        T requiredRouter = (T) get().getRouterInstanceMap().get(routerType, name);
+        if (requiredRouter == null) {
             try {
-                requiredRouter = (T) get().routersMap.get(routerType).newInstance();
-                get().getRouterInstanceMap().put(routerType, requiredRouter);
+                requiredRouter = (T) get().routersMap.get(routerType, name).newInstance();
+                get().getRouterInstanceMap().put(routerType, name, requiredRouter);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
-        } else {
-            requiredRouter = (T) get().getRouterInstanceMap().get(routerType);
         }
         return requiredRouter;
     }
@@ -93,14 +99,14 @@ public class AppJoint {
         return moduleApplications;
     }
 
-    public Map<Class, Object> getRouterInstanceMap() {
+    public BinaryKeyMap<Class, String, Object> getRouterInstanceMap() {
         if (softRouterInstanceMap.get() == null) {
-            softRouterInstanceMap = new SoftReference<>(new HashMap<>());
+            softRouterInstanceMap = new SoftReference<>(new BinaryKeyMap<>());
         }
         return softRouterInstanceMap.get();
     }
 
-    public Map<Class, Class> routersMap() {
+    public BinaryKeyMap<Class, String, Class> routersMap() {
         return routersMap;
     }
 
