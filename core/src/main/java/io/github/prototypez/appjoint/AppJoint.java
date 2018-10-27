@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.github.prototypez.appjoint.util.BinaryKeyMap;
+
 /**
  * Created by zhounl on 2017/11/15.
  */
@@ -19,9 +21,11 @@ public class AppJoint {
 
     private List<Application> moduleApplications = new ArrayList<>();
 
-    private Map<Class, Class> routersMap = new HashMap<>();
+    private BinaryKeyMap<Class, String, Class> routersMap = new BinaryKeyMap<>();
 
-    private Map<Class, Object> routerInstanceMap = new HashMap<>();
+    private BinaryKeyMap<Class, String, Object> routerInstanceMap = new BinaryKeyMap<>();
+
+    public static final String DEFAULT_NAME = "__app_joint_default";
 
     private AppJoint() { }
 
@@ -74,16 +78,18 @@ public class AppJoint {
     }
 
     public static synchronized <T> T service(Class<T> routerType) {
-        T requiredRouter = null;
-        if (!get().routerInstanceMap.containsKey(routerType)) {
+        return service(routerType, DEFAULT_NAME);
+    }
+
+    public static synchronized <T> T service(Class<T> routerType, String name) {
+        T requiredRouter = (T) get().routerInstanceMap.get(routerType, name);
+        if (requiredRouter == null) {
             try {
-                requiredRouter = (T) get().routersMap.get(routerType).newInstance();
-                get().routerInstanceMap.put(routerType, requiredRouter);
+                requiredRouter = (T) get().routersMap.get(routerType, name).newInstance();
+                get().routerInstanceMap.put(routerType, name, requiredRouter);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
-        } else {
-            requiredRouter = (T) get().routerInstanceMap.get(routerType);
         }
         return requiredRouter;
     }
@@ -92,7 +98,7 @@ public class AppJoint {
         return moduleApplications;
     }
 
-    public Map<Class, Class> routersMap() {
+    public BinaryKeyMap<Class, String, Class> routersMap() {
         return routersMap;
     }
 

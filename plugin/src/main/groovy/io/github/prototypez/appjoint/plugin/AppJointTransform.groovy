@@ -24,7 +24,7 @@ class AppJointTransform extends Transform {
     /**
      * Classes annotated with @ServiceProvider
      */
-    def routerAndImpl = [:]
+    def routerAndImpl = new HashMap<Tuple2<Class, String>, Class>()
 
     /**
      * The AppJoint class File
