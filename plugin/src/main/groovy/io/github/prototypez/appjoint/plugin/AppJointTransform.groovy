@@ -31,11 +31,10 @@ class AppJointTransform extends Transform {
      */
     def appJointClassFile
 
-    boolean appJointClassInJar = false
-
-    File appJointJarRepackageFolder
-
-    File appJointJarDest
+    /*
+     * The modified AppJoint class File
+     */
+    File appJointOutputFile
 
     AppJointTransform(Project project) {
         mProject = project
@@ -68,122 +67,50 @@ class AppJointTransform extends Transform {
     @Override
     void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
 
+        // Maybe contains the AppJoint class to write code into
+        def maybeStubs = []
+        // Maybe contains @ModuleSpec, @AppSpec or @ServiceProvider
+        def maybeModules = []
+
         transformInvocation.inputs.each { input ->
-
-            // Maybe contains the AppJoint class to write code into
-            def possibleStubs = []
-            // Maybe contains @ModuleSpec, @AppSpec or @ServiceProvider
-            def possibleModules = []
-
+            // Find annotated classes in jar
             input.jarInputs.each { jarInput ->
                 if (!jarInput.file.exists()) return
                 mProject.logger.info("jar input:" + jarInput.file.getAbsolutePath())
+                mProject.logger.info("jar name:" + jarInput.name)
+
                 def jarName = jarInput.name
-                if (jarName.endsWith(".jar")) {
-                    jarName = jarName.substring(0, jarName.length() - 4)
-                }
-                mProject.logger.info("jar name:" + jarName)
 
                 if (jarName == ":core") {
                     // maybe stub in dev and handle them later
-                    possibleStubs.add(jarInput)
+                    if (maybeStubs.size() == 0) {
+                        maybeStubs.add(jarInput)
+                    }
                     // maybe submodule, ':core' could be user's business module
-                    possibleModules.add(jarInput)
+                    maybeModules.add(jarInput)
                 } else if (jarName.startsWith(":")) {
                     // maybe submodule
-                    possibleModules.add(jarInput)
+                    maybeModules.add(jarInput)
                 } else if (jarName.startsWith("io.github.prototypez:app-joint-core")) {
                     // find the stub
-                    possibleStubs.add(jarInput)
+                    maybeStubs.clear()
+                    maybeStubs.add(jarInput)
                 } else {
+                    // normal jars, just copy it to destination
                     def dest = transformInvocation.outputProvider.getContentLocation(jarName, jarInput.contentTypes, jarInput.scopes, Format.JAR)
                     mProject.logger.info("jar output path:" + dest.getAbsolutePath())
                     FileUtils.copyFile(jarInput.file, dest)
                 }
             }
 
-            // Inside submodules, find class annotated with
-            // @ModuleSpec, @AppSpec or @ServiceProvider
-            possibleModules.each { jarInput ->
-                def jarName = jarInput.name
-
-                File unzipDir = new File(
-                        jarInput.file.getParent(),
-                        jarName.replace(":", "") + "_unzip")
-                if (unzipDir.exists()) {
-                    unzipDir.delete()
-                }
-                unzipDir.mkdirs()
-                Decompression.uncompress(jarInput.file, unzipDir)
-
-                File repackageFolder = new File(
-                        jarInput.file.getParent(),
-                        jarName.replace(":", "") + "_repackage"
-                )
-
-                FileUtils.copyDirectory(unzipDir, repackageFolder)
-
-                unzipDir.eachFileRecurse(FileType.FILES) { File it ->
-                    findAnnotatedClasses(it, repackageFolder)
-                }
-
-                // re-package the folder to jar
-                def dest = transformInvocation.outputProvider.getContentLocation(
-                        jarName, jarInput.contentTypes, jarInput.scopes, Format.JAR)
-
-                Compressor zc = new Compressor(dest.getAbsolutePath())
-                zc.compress(repackageFolder.getAbsolutePath())
-            }
-
-            // Inside local ':core' Module or remote app-joint dependency,
-            // find the AppJoint class in jars
-            possibleStubs.each { jarInput ->
-                def jarName = jarInput.name
-
-                File unzipDir = new File(
-                        jarInput.file.getParent(),
-                        jarName.replace(":", "") + "_unzip")
-                if (unzipDir.exists()) {
-                    unzipDir.delete()
-                }
-                unzipDir.mkdirs()
-                Decompression.uncompress(jarInput.file, unzipDir)
-
-                File repackageFolder = new File(
-                        jarInput.file.getParent(),
-                        jarName.replace(":", "") + "_repackage"
-                )
-
-                FileUtils.copyDirectory(unzipDir, repackageFolder)
-
-                unzipDir.eachFileRecurse(FileType.FILES) { File it ->
-                    findAppJointClass(it)
-                }
-
-                if (appJointClassFile != null) {
-                    // find the AppJoint class in jar
-                    appJointClassInJar = true
-                }
-
-                // re-package the folder to jar
-                def dest = transformInvocation.outputProvider.getContentLocation(
-                        jarName, jarInput.contentTypes, jarInput.scopes, Format.JAR)
-
-                if (appJointClassFile == null) {
-                    Compressor zc = new Compressor(dest.getAbsolutePath())
-                    zc.compress(repackageFolder.getAbsolutePath())
-                } else {
-                    appJointJarDest = dest
-                    appJointJarRepackageFolder = repackageFolder
-                }
-            }
-
-            // Find annotated classes and AppJoint class in dir
+            // Find annotated classes in dir
             input.directoryInputs.each { dirInput ->
+                mProject.logger.info("dirInput.file :" + dirInput.file)
+
                 def outDir = transformInvocation.outputProvider.getContentLocation(dirInput.name, dirInput.contentTypes, dirInput.scopes, Format.DIRECTORY)
                 // dirInput.file is like "build/intermediates/classes/debug"
                 int pathBitLen = dirInput.file.toString().length()
-                mProject.logger.info("dirInput.file :" + dirInput.file)
+
                 def callback = { File it ->
                     if (it.exists()) {
                         def path = "${it.toString().substring(pathBitLen)}"
@@ -192,7 +119,6 @@ class AppJointTransform extends Transform {
                         } else {
                             def output = new File(outDir, path)
                             findAnnotatedClasses(it, output)
-                            findAppJointClass(it)
                             if (!output.parentFile.exists()) output.parentFile.mkdirs()
                             output.bytes = it.bytes
                         }
@@ -206,30 +132,47 @@ class AppJointTransform extends Transform {
                     dirInput.file.traverse(callback)
                 }
             }
-
         }
+
+        def repackageActions = [];
+
+        // Inside submodules, find class annotated with
+        // @ModuleSpec, @AppSpec or @ServiceProvider
+        maybeModules.each { JarInput jarInput ->
+            def repackageAction = traversalJar(
+                    transformInvocation,
+                    jarInput,
+                    { File outputFile, File input -> return findAnnotatedClasses(input, outputFile) }
+            )
+            if (repackageAction) repackageActions.add(repackageAction)
+        }
+
+        // Inside local ':core' Module or remote app-joint dependency,
+        // find the AppJoint class in jars
+        maybeStubs.each { JarInput jarInput ->
+            def repackageAction = traversalJar(
+                    transformInvocation,
+                    jarInput,
+                    { File outputFile, File input -> return findAppJointClass(input, outputFile) }
+            )
+            if (repackageAction) repackageActions.add(repackageAction)
+        }
+
         mProject.logger.info("moduleApplications: $moduleApplications")
         mProject.logger.info("appApplications: $appApplications")
         mProject.logger.info("routerAndImpl: $routerAndImpl")
         mProject.logger.info("appJointClassFile: $appJointClassFile")
+        mProject.logger.info("appJointOutputFile: $appJointOutputFile")
+        mProject.logger.info("repackageActions: ${repackageActions.size()}")
 
         // Insert code to AppJoint class
         def inputStream = new FileInputStream(appJointClassFile)
         ClassReader cr = new ClassReader(inputStream)
         ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS)
         ClassVisitor classVisitor = new AppJointClassVisitor(cw)
-
         cr.accept(classVisitor, 0)
-
-        def outputFile = new File(
-                appJointJarRepackageFolder,
-                "io/github/prototypez/appjoint/AppJoint.class"
-        )
-        outputFile.bytes = cw.toByteArray()
+        appJointOutputFile.bytes = cw.toByteArray()
         inputStream.close()
-
-        Compressor zc = new Compressor(appJointJarDest.getAbsolutePath())
-        zc.compress(appJointJarRepackageFolder.getAbsolutePath())
 
         // Insert code to Application of App
         appApplications.each { File classFile, File output ->
@@ -243,14 +186,8 @@ class AppJointTransform extends Transform {
             inputStream.close()
         }
 
-//        moduleApplications = []
-//        appApplications = [:]
-//        routerAndImpl = [:]
-//        appJointClassFile = null
-//        appJointClassInJar = false
-//        appJointJarRepackageFolder = null
-//        appJointJarDest = null
-
+        // After all class modifications are done, repackage all deferred jar repackage
+        repackageActions.each { Closure action -> action.call() }
     }
 
     // Visit and change the AppJoint Class
@@ -435,11 +372,17 @@ class AppJointTransform extends Transform {
         }
     }
 
-    // Find the AppJoint class
-    void findAppJointClass(File file) {
+    /**
+     * Find the AppJoint class, this method doesn't change the class file
+     * @param file: the class file to be checked
+     * @param outputFile: where the modified class should be output to
+     * @return whether the file is AppJoint class file
+     */
+    boolean findAppJointClass(File file, File outputFile) {
         if (!file.exists() || !file.name.endsWith(".class")) {
             return
         }
+        boolean found = false;
         def inputStream = new FileInputStream(file)
         ClassReader cr = new ClassReader(inputStream)
         cr.accept(new ClassVisitor(Opcodes.ASM5) {
@@ -448,17 +391,28 @@ class AppJointTransform extends Transform {
                 super.visit(version, access, name, signature, superName, interfaces)
                 if (name == "io/github/prototypez/appjoint/AppJoint") {
                     appJointClassFile = file
+                    appJointOutputFile = outputFile
+                    found = true
                 }
             }
         }, 0)
         inputStream.close()
+        return found
     }
 
-    // Check @ModuleSpec, @AppSpec, @ServiceProvider existence
-    void findAnnotatedClasses(File file, File output) {
+    /**
+     * Check @ModuleSpec, @AppSpec, @ServiceProvider existence
+     * doesn't change any class file
+     *
+     * @param file : the file to be checked
+     * @param output : the class modification output path, if it needs
+     * @return whether this class needs to be modify
+     */
+    boolean findAnnotatedClasses(File file, File output) {
         if (!file.exists() || !file.name.endsWith(".class")) {
             return
         }
+        def needsModification = false
         def inputStream = new FileInputStream(file)
         ClassReader cr = new ClassReader(inputStream)
         cr.accept(new ClassVisitor(Opcodes.ASM5) {
@@ -471,6 +425,7 @@ class AppJointTransform extends Transform {
                         break
                     case "Lio/github/prototypez/appjoint/core/AppSpec;":
                         appApplications[file] = output
+                        needsModification = true
                         break
                     case "Lio/github/prototypez/appjoint/core/ServiceProvider;":
                         cr.interfaces.each { routerAndImpl[it] = cr.className }
@@ -480,5 +435,53 @@ class AppJointTransform extends Transform {
             }
         }, 0)
         inputStream.close()
+        return needsModification
+    }
+
+    /**
+     * Unzip jarInput, traversal all files, do something, and repackage it back to jar(Optional)
+     * @param transformInvocation From Transform Api
+     * @param jarInput From Transform Api
+     * @param closure something you wish to do while traversal, return true if you want to repackage later
+     * @return repackage action if you return true in closure, null if you return false in every traversal
+     */
+    static Closure traversalJar(TransformInvocation transformInvocation, JarInput jarInput, Closure closure) {
+        def jarName = jarInput.name
+
+        File unzipDir = new File(
+                jarInput.file.getParent(),
+                jarName.replace(":", "") + "_unzip")
+        if (unzipDir.exists()) {
+            unzipDir.delete()
+        }
+        unzipDir.mkdirs()
+        Decompression.uncompress(jarInput.file, unzipDir)
+
+        File repackageFolder = new File(
+                jarInput.file.getParent(),
+                jarName.replace(":", "") + "_repackage"
+        )
+
+        FileUtils.copyDirectory(unzipDir, repackageFolder)
+
+        boolean repackageLater = false
+        unzipDir.eachFileRecurse(FileType.FILES, { File it ->
+            File outputFile = new File(repackageFolder, it.absolutePath.split("_unzip")[1])
+            boolean result = closure.call(outputFile, it)
+            if (result) repackageLater = true
+        })
+
+        def repackageAction = {
+            def dest = transformInvocation.outputProvider.getContentLocation(
+                    jarName, jarInput.contentTypes, jarInput.scopes, Format.JAR)
+            Compressor zc = new Compressor(dest.getAbsolutePath())
+            zc.compress(repackageFolder.getAbsolutePath())
+        }
+
+        if (!repackageLater) {
+            repackageAction.call()
+        } else {
+            return repackageAction
+        }
     }
 }
