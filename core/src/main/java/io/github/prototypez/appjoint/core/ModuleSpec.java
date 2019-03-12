@@ -8,4 +8,5 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.CLASS)
 public @interface ModuleSpec {
+    int priority() default 1000;
 }

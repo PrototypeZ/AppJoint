@@ -16,7 +16,7 @@ class AppJointTransform extends Transform {
     /**
      * Classes annotated with @ModuleSpec
      */
-    def moduleApplications = []
+    def moduleApplications = new ArrayList<AnnotationOrder>()
     /**
      * Classes annotated with @AppSpec
      */
@@ -223,7 +223,10 @@ class AppJointTransform extends Transform {
                 case Opcodes.LRETURN:
                 case Opcodes.DRETURN:
                 case Opcodes.RETURN:
-                    moduleApplications.each { insertApplicationAdd(it) }
+                    moduleApplications.sort { a, b -> a.order <=> b.order }
+                    for (int i = 0; i < moduleApplications.size(); i++) {
+                        insertApplicationAdd(moduleApplications[i].className)
+                    }
                     routerAndImpl.each { router, impl -> insertRoutersPut(router, impl) }
                     break
             }
@@ -416,12 +419,32 @@ class AppJointTransform extends Transform {
         def inputStream = new FileInputStream(file)
         ClassReader cr = new ClassReader(inputStream)
         cr.accept(new ClassVisitor(Opcodes.ASM5) {
+            private isModuleSpec = false
+            static class AnnotationMethodsVisitor extends AnnotationVisitor {
+
+                AnnotationMethodsVisitor() {
+                    super(Opcodes.ASM5)
+                }
+
+                @Override
+                AnnotationVisitor visitAnnotation(String name, String desc) {
+                    mProject.logger.info("Annotation: name=$name desc=$desc")
+                    return super.visitAnnotation(name, desc);
+                }
+
+                @Override
+                void visit(String name, Object value) {
+                    mProject.logger.info("Annotation value: name=$name value=$value")
+                    super.visit(name, value)
+                }
+            }
+
             @Override
             AnnotationVisitor visitAnnotation(String desc, boolean visible) {
                 mProject.logger.info("visiting $desc")
                 switch (desc) {
                     case "Lio/github/prototypez/appjoint/core/ModuleSpec;":
-                        moduleApplications.add(cr.className)
+                        isModuleSpec = true
                         break
                     case "Lio/github/prototypez/appjoint/core/AppSpec;":
                         appApplications[file] = output
@@ -431,6 +454,15 @@ class AppJointTransform extends Transform {
                         cr.interfaces.each { routerAndImpl[it] = cr.className }
                         break
                 }
+                if (isModuleSpec) {
+                    return new AnnotationMethodsVisitor() {
+                        @Override
+                        void visit(String name, Object value) {
+                            moduleApplications.add(new AnnotationOrder(Integer.valueOf(value), cr.className))
+                            super.visit(name, value)
+                        }
+                    }
+                }
                 return super.visitAnnotation(desc, visible)
             }
         }, 0)
@@ -438,6 +470,15 @@ class AppJointTransform extends Transform {
         return needsModification
     }
 
+    class AnnotationOrder {
+        private int order
+        private String className
+
+        AnnotationOrder(int order, String className) {
+            this.className = className
+            this.order = order
+        }
+    }
     /**
      * Unzip jarInput, traversal all files, do something, and repackage it back to jar(Optional)
      * @param transformInvocation From Transform Api
