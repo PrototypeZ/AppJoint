@@ -1,10 +1,12 @@
 package io.github.prototypez.appjoint.module2;
 
 import android.util.Log;
+
 import io.github.prototypez.appjoint.commons.AppBase;
 import io.github.prototypez.appjoint.core.ModuleSpec;
 
-@ModuleSpec public class Module2Application extends AppBase {
+@ModuleSpec(priority = 1)
+public class Module2Application extends AppBase {
 
     @Override
     public void onCreate() {

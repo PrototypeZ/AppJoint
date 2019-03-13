@@ -4,7 +4,7 @@ import android.util.Log
 import io.github.prototypez.appjoint.commons.AppBase
 import io.github.prototypez.appjoint.core.ModuleSpec
 
-@ModuleSpec
+@ModuleSpec(priority = 2)
 open class Module1Application : AppBase() {
 
   override fun onCreate() {
