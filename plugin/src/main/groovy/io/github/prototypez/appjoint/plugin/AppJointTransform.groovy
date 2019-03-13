@@ -225,6 +225,7 @@ class AppJointTransform extends Transform {
                 case Opcodes.RETURN:
                     moduleApplications.sort { a, b -> a.order <=> b.order }
                     for (int i = 0; i < moduleApplications.size(); i++) {
+                        mProject.logger.info("insertApplicationAdd order:${moduleApplications[i].order} className:${moduleApplications[i].className}")
                         insertApplicationAdd(moduleApplications[i].className)
                     }
                     routerAndImpl.each { router, impl -> insertRoutersPut(router, impl) }
@@ -445,6 +446,7 @@ class AppJointTransform extends Transform {
                 switch (desc) {
                     case "Lio/github/prototypez/appjoint/core/ModuleSpec;":
                         isModuleSpec = true
+                        moduleApplications.add(new AnnotationOrder(cr.className))
                         break
                     case "Lio/github/prototypez/appjoint/core/AppSpec;":
                         appApplications[file] = output
@@ -458,7 +460,12 @@ class AppJointTransform extends Transform {
                     return new AnnotationMethodsVisitor() {
                         @Override
                         void visit(String name, Object value) {
-                            moduleApplications.add(new AnnotationOrder(Integer.valueOf(value), cr.className))
+                            def moduleApplication = moduleApplications.find({
+                                it.className == cr.className
+                            })
+                            if (moduleApplication) {
+                                moduleApplication.order = Integer.valueOf(value)
+                            }
                             super.visit(name, value)
                         }
                     }
@@ -471,12 +478,11 @@ class AppJointTransform extends Transform {
     }
 
     class AnnotationOrder {
-        private int order
+        private int order = 1000
         private String className
 
-        AnnotationOrder(int order, String className) {
+        AnnotationOrder(String className) {
             this.className = className
-            this.order = order
         }
     }
     /**
