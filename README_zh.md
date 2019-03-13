@@ -110,7 +110,7 @@ Module1Service service = AppJoint.service(Module1Service.class);
 如果您需要您的每个组件化模块可以独立运行, 您可以为每个组件化的模块创建属于该模块的自定义 `Application` 对象，例如：
 
 ```kotlin
-@ModuleSpec
+@ModuleSpec( priority = 1 ) //支持指定初始化的优先级
 class Module1Application : Application() {
 
   override fun onCreate() {
