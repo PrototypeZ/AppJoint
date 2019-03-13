@@ -1,5 +1,5 @@
 group 'io.github.prototypez'
-version '1.5'
+version '1.6'
 
 apply plugin: 'groovy'
 apply plugin: 'maven'
@@ -9,7 +9,7 @@ publish {
     userOrg = 'prototypez'
     groupId = 'io.github.prototypez'
     artifactId = 'app-joint'
-    publishVersion = '1.5'
+    publishVersion = '1.6'
     desc = 'Joint Applications for multi-module Android project'
     website = 'https://github.com/PrototypeZ/AppJoint'
 }
