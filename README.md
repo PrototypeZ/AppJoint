@@ -115,7 +115,7 @@ Module1Service service = AppJoint.service(Module1Service.class);
 You can create a custom `Application` class for each module in order to run the module standalone, for example：
 
 ```kotlin
-@ModuleSpec
+@ModuleSpec( priority = 1) // support module ordering initialization by priority
 class Module1Application : Application() {
 
   override fun onCreate() {
