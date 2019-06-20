@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Configuration;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class AppJoint {
 
     private Map<Class, Class> routersMap = new HashMap<>();
 
-    private Map<Class, Object> routerInstanceMap = new HashMap<>();
+    private SoftReference<Map<Class, Object>> softRouterInstanceMap = new SoftReference<>(new HashMap<>());
 
     private AppJoint() { }
 
@@ -75,21 +76,28 @@ public class AppJoint {
 
     public static synchronized <T> T service(Class<T> routerType) {
         T requiredRouter = null;
-        if (!get().routerInstanceMap.containsKey(routerType)) {
+        if (!get().getRouterInstanceMap().containsKey(routerType)) {
             try {
                 requiredRouter = (T) get().routersMap.get(routerType).newInstance();
-                get().routerInstanceMap.put(routerType, requiredRouter);
+                get().getRouterInstanceMap().put(routerType, requiredRouter);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
         } else {
-            requiredRouter = (T) get().routerInstanceMap.get(routerType);
+            requiredRouter = (T) get().getRouterInstanceMap().get(routerType);
         }
         return requiredRouter;
     }
 
     public List<Application> moduleApplications() {
         return moduleApplications;
+    }
+
+    public Map<Class, Object> getRouterInstanceMap() {
+        if (softRouterInstanceMap.get() == null) {
+            softRouterInstanceMap = new SoftReference<>(new HashMap<>());
+        }
+        return softRouterInstanceMap.get();
     }
 
     public Map<Class, Class> routersMap() {
