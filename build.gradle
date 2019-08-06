@@ -7,11 +7,11 @@ buildscript {
         google()
         jcenter()
         maven { url "https://dl.bintray.com/prototypez/maven/"}
-//        maven { url '../repo' }
+        maven { url '../repo' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.4.2'
-        classpath 'io.github.prototypez:app-joint:1.6.1'
+        classpath 'io.github.prototypez:app-joint:1.6.2'
         classpath 'com.novoda:bintray-release:0.8.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         // NOTE: Do not place your application dependencies here; they belong

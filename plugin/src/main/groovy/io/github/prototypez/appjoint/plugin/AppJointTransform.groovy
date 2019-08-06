@@ -165,6 +165,10 @@ class AppJointTransform extends Transform {
         mProject.logger.info("appJointOutputFile: $appJointOutputFile")
         mProject.logger.info("repackageActions: ${repackageActions.size()}")
 
+        if (appJointClassFile == null) {
+            throw new RuntimeException("AppJoint class file not found, please check \"io.github.prototypez:app-joint-core:{latest_version}\" is in your dependency graph.")
+        }
+
         // Insert code to AppJoint class
         def inputStream = new FileInputStream(appJointClassFile)
         ClassReader cr = new ClassReader(inputStream)
