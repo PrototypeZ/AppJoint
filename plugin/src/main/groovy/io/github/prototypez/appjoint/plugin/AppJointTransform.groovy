@@ -450,7 +450,7 @@ class AppJointTransform extends Transform {
                 switch (desc) {
                     case "Lio/github/prototypez/appjoint/core/ModuleSpec;":
                         isModuleSpec = true
-                        moduleApplications.add(new AnnotationOrder(cr.className))
+                        addModuleApplication(new AnnotationOrder(cr.className))
                         break
                     case "Lio/github/prototypez/appjoint/core/AppSpec;":
                         appApplications[file] = output
@@ -479,6 +479,16 @@ class AppJointTransform extends Transform {
         }, 0)
         inputStream.close()
         return needsModification
+    }
+
+    private void addModuleApplication(AnnotationOrder annotationOrder) {
+        for (int i = 0; i < moduleApplications.size(); i++) {
+            if (annotationOrder.className == moduleApplications.get(i).className) {
+                // the module application class ready to be added is already marked
+                return
+            }
+        }
+        moduleApplications.add(annotationOrder)
     }
 
     class AnnotationOrder {
