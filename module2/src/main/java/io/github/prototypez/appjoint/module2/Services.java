@@ -6,7 +6,7 @@ import io.github.prototypez.service.module1.Module1Service;
 
 public class Services {
 
-  public static AppService sAppService = AppJoint.service(AppService.class);
+  public static AppService sAppService = AppJoint.service(AppService.class, "another");
 
   public static Module1Service sModule1Service = AppJoint.service(Module1Service.class);
 }

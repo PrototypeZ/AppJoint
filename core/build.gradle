@@ -1,4 +1,8 @@
+group 'io.github.prototypez'
+version '1.6.2'
+
 apply plugin: 'com.android.library'
+apply plugin: 'maven'
 apply plugin: 'com.novoda.bintray-release'
 
 publish {
@@ -44,4 +48,13 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.artifactId = 'app-joint-core'
+            repository(url: uri('../../repo'))
+        }
+    }
 }

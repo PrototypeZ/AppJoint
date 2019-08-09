@@ -254,10 +254,10 @@ class AppJointTransform extends Transform {
 
         void insertRoutersPut(String router, String impl) {
             mv.visitVarInsn(Opcodes.ALOAD, 0)
-            mv.visitFieldInsn(Opcodes.GETFIELD, "io/github/prototypez/appjoint/AppJoint", "routersMap", "Ljava/util/Map;")
+            mv.visitFieldInsn(Opcodes.GETFIELD, "io/github/prototypez/appjoint/AppJoint", "routersMap", "Lio/github/prototypez/appjoint/util/BinaryKeyMap;")
             mv.visitLdcInsn(Type.getObjectType(router))
             mv.visitLdcInsn(Type.getObjectType(impl))
-            mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true)
+            mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, "io/github/prototypez/appjoint/util/BinaryKeyMap", "put", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true)
             mv.visitInsn(Opcodes.POP)
         }
     }
