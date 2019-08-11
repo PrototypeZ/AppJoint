@@ -9,7 +9,7 @@ publish {
     userOrg = 'prototypez'
     groupId = 'io.github.prototypez'
     artifactId = 'app-joint-core'
-    publishVersion = '1.6.1'
+    publishVersion = '1.7'
     desc = 'Joint Applications for multi-module Android project'
     website = 'https://github.com/PrototypeZ/AppJoint'
 }

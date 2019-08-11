@@ -4,15 +4,12 @@ import android.app.Application;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Configuration;
+import io.github.prototypez.appjoint.util.BinaryKeyMap;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import io.github.prototypez.appjoint.util.BinaryKeyMap;
 
 /**
  * Created by zhounl on 2017/11/15.
