@@ -115,7 +115,10 @@ Module1Service service = AppJoint.service(Module1Service.class);
 You can create a custom `Application` class for each module in order to run the module standalone, for example：
 
 ```kotlin
-@ModuleSpec( priority = 1) // support module ordering initialization by priority
+
+// it supports initializing module applications by priority,
+// if priorities are not defined, they are initialized with an unknown sequence
+@ModuleSpec( priority = 1) 
 class Module1Application : Application() {
 
   override fun onCreate() {
@@ -142,6 +145,23 @@ class App : Application() {
 
 **AppJoint** can ensure that, when the lifecycle methods(such as `onCreate`, `attachBaseContext`) of the class annotated with `@AppSpec` are called, the same lifecycle methods of the class annoatated with `@ModuleSpec` will be called, too. 
 
+## Multi-implementation for cross module interfaces
+
+We can name implementations for an specific interface to provide more implementations for this interface.
+
+```kotlin
+@ServiceProvider("anotherImpl")
+class Module1ServiceAnotherImpl : Module1Service {
+  ...
+}
+```
+
+Then we only need to provide the name of an implementation to get proper implementation of the interface:
+
+```kotlin
+Module1Service service = AppJoint.service(Module1Service.class, "anotherImpl");
+```
+
 ## FAQ
 
 + Q: Does AppJoint support Instant Run?
@@ -152,8 +172,12 @@ class App : Application() {
 
   A: No, there's no reflection, so you are safe to use Proguard.
 
+## TroubleShooting
 
++ Error in compile time, `AppJoint class file not found, please check "io.github.prototypez:app-joint-core:{latest_version}" is in your dependency graph.`
 
+  Solution: First, make sure `"io.github.prototypez:app-joint-core:{latest_version}"` can be visited in your main app module. Second, make sure line `apply plugin: 'app-joint'` is right below `apply plugin: 'com.android.application'` before other plugins.
+  
 ## LICENSE
 
     Copyright (c) 2016-present, AppJoint Contributors.

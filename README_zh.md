@@ -110,7 +110,7 @@ Module1Service service = AppJoint.service(Module1Service.class);
 如果您需要您的每个组件化模块可以独立运行, 您可以为每个组件化的模块创建属于该模块的自定义 `Application` 对象，例如：
 
 ```kotlin
-@ModuleSpec( priority = 1 ) //支持指定初始化的优先级
+@ModuleSpec( priority = 1 ) // 支持指定初始化的优先级， 如果不指定优先级，模块以不可知的顺序随机初始化
 class Module1Application : Application() {
 
   override fun onCreate() {
@@ -138,6 +138,23 @@ class App : Application() {
 **AppJoint** 可以保证，当标记了 `@AppSpec` 的类被系统回调属于 `Application` 的某个生命周期函数（例如 `onCreate`、 `attachBaseContext`）时，那些标记了 `@ModuleSpec` 的类也会被回调相同的生命周期方法。 
 
 
+## 跨模块接口的多种实现
+
+我们可以为跨模块的接口提供多种实现，只需要在实现类上标记 `@ServiceProvider` 注解的同时指定具体的命名：
+
+```kotlin
+@ServiceProvider("anotherImpl")
+class Module1ServiceAnotherImpl : Module1Service {
+  ...
+}
+```
+
+然后，我们可以在需要获得 `Module1Service` 接口实例的地方，传入需要具体的实现类的名字：
+
+```kotlin
+Module1Service service = AppJoint.service(Module1Service.class, "anotherImpl");
+```
+
 ## 组件化的其他问题
 
 除了上面介绍的功能，组件化还涉及许多其它问题，但是这些内容已经不属于 **AppJoint** 的范畴了，它们包括：
@@ -161,6 +178,11 @@ class App : Application() {
 
   A: 不需要。
 
+## 常见问题
+
++ 在编译的过程中报错， `AppJoint class file not found, please check "io.github.prototypez:app-joint-core:{latest_version}" is in your dependency graph.`
+
+  解决方案： 首先确定在应用了 `apply plugin: 'app-joint'` 的模块内，确实可以访问到 `"io.github.prototypez:app-joint-core:{latest_version}"` 这个依赖，然后确保插件应用在其它插件之前。
 
 
 ## LICENSE
